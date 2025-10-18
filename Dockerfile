@@ -1,15 +1,17 @@
-FROM python:3.13
+# Dockerfile.dev
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
-RUN apt-get update \
-&& apt-get install -y --no-install-recommends \
-build-essential \
-&& rm -rf /var/lib/apt/lists/*
+# 依存レイヤを先に固定
+COPY requirements.txt .
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-
+# アプリ本体
 COPY . .
 
 EXPOSE 8000
