@@ -22,6 +22,7 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+      - ./logs:/app/logs
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/project_db
       APP_ENV: dev
