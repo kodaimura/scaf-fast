@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy import BigInteger, String, Text, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column
-from core.database import Base
+from app.core.database import Base
 
 
 class Account(Base):

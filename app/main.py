@@ -1,9 +1,9 @@
 from fastapi import FastAPI, Request, HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from pydantic import ValidationError
-from core.response import ApiResponse
-from core.logger import logger
-from api.router import api_router
+from app.core.response import ApiResponse
+from app.core.logger import logger
+from app.api.router import api_router
 
 
 app = FastAPI(title="scaf-fast", version="1.0.0")

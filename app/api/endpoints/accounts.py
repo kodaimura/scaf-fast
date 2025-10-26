@@ -2,16 +2,16 @@ from fastapi import APIRouter, Depends, Response, Cookie, status
 from sqlalchemy.orm import Session
 from typing import Optional
 
-from core.database import get_db
-from core.response import ApiResponse
-from modules.account.service import AccountService
-from modules.refresh_token.service import RefreshTokenService
-from modules.account.schemas import (
+from app.core.database import get_db
+from app.core.response import ApiResponse
+from app.module.account.service import AccountService
+from app.module.refresh_token.service import RefreshTokenService
+from app.module.account.schemas import (
     AccountCreate,
     LoginRequest,
 )
 
-router = APIRouter(prefix="/accounts", tags=["Accounts"])
+router = APIRouter()
 
 
 # ---------------------------

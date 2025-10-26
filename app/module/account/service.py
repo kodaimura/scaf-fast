@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from core.security import verify_password
+from app.core.security import verify_password
 from .repository import AccountRepository
 from .schemas import AccountCreate
 

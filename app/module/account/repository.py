@@ -2,7 +2,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from datetime import datetime
-from core.security import hash_password
+from app.core.security import hash_password
 from .model import Account
 from .schemas import AccountCreate
 
