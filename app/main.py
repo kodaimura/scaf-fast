@@ -32,7 +32,8 @@ async def handle_http_exception(request: Request, exc: HTTPException):
     return ApiResponse.error(
         message=exc.detail or "HTTP error",
         data={"status_code": exc.status_code},
-    ).to_fastapi_response(status_code=exc.status_code)
+        status_code=exc.status_code,
+    )
 
 
 @app.exception_handler(SQLAlchemyError)
@@ -42,7 +43,8 @@ async def handle_db_error(request: Request, exc: SQLAlchemyError):
     return ApiResponse.error(
         message="Database error occurred",
         data={"detail": str(exc)},
-    ).to_fastapi_response(status_code=500)
+        status_code=500,
+    )
 
 
 @app.exception_handler(ValidationError)
@@ -52,7 +54,8 @@ async def handle_validation_error(request: Request, exc: ValidationError):
     return ApiResponse.error(
         message="Validation error",
         data={"errors": exc.errors()},
-    ).to_fastapi_response(status_code=422)
+        status_code=422,
+    )
 
 
 @app.exception_handler(Exception)
@@ -62,4 +65,5 @@ async def handle_generic_error(request: Request, exc: Exception):
     return ApiResponse.error(
         message="Internal server error",
         data={"detail": str(exc)},
-    ).to_fastapi_response(status_code=500)
+        status_code=500,
+    )

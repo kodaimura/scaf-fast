@@ -1,12 +1,10 @@
 from datetime import datetime, timedelta
 from typing import Tuple, Optional
-from passlib.context import CryptContext
 from jose import jwt, JWTError
+import bcrypt
 import secrets
 import hashlib
 from app.core.config import settings
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWTアルゴリズム
 ALGORITHM = "HS256"
@@ -14,13 +12,23 @@ ALGORITHM = "HS256"
 
 # ======== パスワード関連 ======== #
 def hash_password(password: str) -> str:
-    """ユーザーのパスワードをハッシュ化"""
-    return pwd_context.hash(password)
+    """
+    ユーザーのパスワードをハッシュ化
+    """
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+    return hashed.decode("utf-8")
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    """平文とハッシュを照合"""
-    return pwd_context.verify(plain, hashed)
+    """
+    平文とハッシュを照合
+    """
+    try:
+        return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
+    except ValueError:
+        # bcryptは72バイトを超えるパスワードでエラーになる
+        return False
 
 
 # ======== JWTトークン関連 ======== #
@@ -37,7 +45,6 @@ def create_access_token(data: dict) -> str:
 def create_refresh_token(data: dict) -> str:
     """
     リフレッシュトークン（長期有効）
-    ※ これはJWT型。別途DBに保存するハッシュ型トークンも併用可能。
     """
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
@@ -87,7 +94,6 @@ def generate_token() -> str:
 def hash_token(token: str) -> str:
     """
     リフレッシュトークンをハッシュ化して保存するための関数。
-    平文トークンはDBに保存せず、比較時に再ハッシュして照合。
     """
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 

@@ -4,5 +4,5 @@ alembic
 sqlalchemy
 psycopg[binary]
 python-jose[cryptography]
-passlib[bcrypt]
+bcrypt
 pydantic[email]

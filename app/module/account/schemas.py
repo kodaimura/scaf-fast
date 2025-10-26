@@ -12,20 +12,12 @@ class AccountCreate(AccountBase):
     password: str
 
 
-class AccountResponse(AccountBase):
+class AccountInternal(AccountBase):
+    """DBから取得した内部用DTO"""
+
     id: int
     created_at: datetime
     updated_at: datetime
 
     class Config:
-        orm_mode = True
-
-
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
-
-
-class LoginResponse(BaseModel):
-    account: AccountResponse
-    access_token: str
+        from_attributes = True
