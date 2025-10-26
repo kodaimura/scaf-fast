@@ -55,7 +55,7 @@ class RefreshTokenService:
             return None
 
         # 無効フラグ・期限切れチェック
-        if token_obj.revoked:
+        if token_obj.revoked_at:
             return None
         if token_obj.expires_at < datetime.utcnow():
             return None

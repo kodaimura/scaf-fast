@@ -14,7 +14,9 @@ class ApiResponse:
         response: Optional[Response] = None,
     ) -> JSONResponse:
         encoded = jsonable_encoder(data)
-        headers = getattr(response, "headers", None) if response else None
+        headers = {}
+        if response is not None:
+            headers.update(response.headers)
 
         return JSONResponse(
             content=encoded,
@@ -29,7 +31,6 @@ class ApiResponse:
         response: Optional[Response] = None,
         status_code: int = status.HTTP_200_OK,
     ) -> JSONResponse:
-        """200 OK"""
         return cls._build_response(
             data=data,
             status_code=status_code,
@@ -42,7 +43,6 @@ class ApiResponse:
         data: Any = None,
         response: Optional[Response] = None,
     ) -> JSONResponse:
-        """201 Created"""
         return cls._build_response(
             data=data,
             status_code=status.HTTP_201_CREATED,
@@ -52,18 +52,16 @@ class ApiResponse:
     @classmethod
     def error(
         cls,
-        message: str,
+        data: Any = None,
         status_code: int = status.HTTP_400_BAD_REQUEST,
     ) -> JSONResponse:
-        """400 Bad Request"""
         return cls._build_response(
-            data={"detail": message},
+            data=data,
             status_code=status_code,
         )
 
     @classmethod
     def unauthorized(cls, message: str = "Unauthorized") -> JSONResponse:
-        """401 Unauthorized"""
         return cls._build_response(
             data={"detail": message},
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -71,7 +69,6 @@ class ApiResponse:
 
     @classmethod
     def not_found(cls, message: str = "Resource not found") -> JSONResponse:
-        """404 Not Found"""
         return cls._build_response(
             data={"detail": message},
             status_code=status.HTTP_404_NOT_FOUND,

@@ -1,3 +1,4 @@
+from fastapi import HTTPException, status, Header
 from datetime import datetime, timedelta
 from typing import Tuple, Optional
 from jose import jwt, JWTError
@@ -81,6 +82,29 @@ def verify_token_type(token: str, expected_type: str) -> bool:
     if not payload:
         return False
     return payload.get("type") == expected_type
+
+
+def verify_access_token(authorization: str = Header(None)):
+    """
+    AuthorizationヘッダのJWT access_tokenを検証。
+    FastAPIのDepends()で使う用。
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid Authorization header",
+        )
+
+    token = authorization.split(" ")[1]
+    payload = decode_token(token)
+
+    if not payload or not verify_token_type(token, "access"):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired access token",
+        )
+
+    return payload
 
 
 # ======== DB用リフレッシュトークン生成 ======== #
