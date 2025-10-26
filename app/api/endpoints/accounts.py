@@ -7,7 +7,6 @@ from app.core.response import ApiResponse
 from app.module.account.service import AccountService
 from app.module.refresh_token.service import RefreshTokenService
 
-# ✅ API用DTO
 from app.api.dto.accounts import (
     SignupRequest,
     SignupResponse,
@@ -28,15 +27,12 @@ router = APIRouter()
 @router.post("/signup", response_model=SignupResponse)
 def signup(data: SignupRequest, response: Response, db: Session = Depends(get_db)):
     account_service = AccountService(db)
-    account_internal = account_service.create(data)  # ✅ AccountInternalを受け取る
-
+    account_internal = account_service.create(data)
     account_data = AccountResponse.model_validate(account_internal.model_dump())
-
     response_dto = SignupResponse(account=account_data)
 
     return ApiResponse.created(
         data=response_dto.model_dump(),
-        message="Account created successfully",
         response=response,
     )
 
@@ -50,10 +46,8 @@ def login(response: Response, data: LoginRequest, db: Session = Depends(get_db))
     refresh_service = RefreshTokenService(db)
 
     account_internal = account_service.authenticate(data.email, data.password)
-
     access_token = refresh_service.issue(account_internal.id)
 
-    # Cookieにrefresh_tokenを保存
     response.set_cookie(
         key="refresh_token",
         value=access_token,
@@ -68,7 +62,6 @@ def login(response: Response, data: LoginRequest, db: Session = Depends(get_db))
 
     return ApiResponse.ok(
         data=response_dto.model_dump(),
-        message="Login successful",
         response=response,
     )
 
@@ -83,16 +76,15 @@ def refresh_token(
     db: Session = Depends(get_db),
 ):
     if not refresh_token:
-        return ApiResponse.unauthorized("Missing refresh token", response=response)
+        return ApiResponse.unauthorized("Missing refresh token")
 
     token_service = RefreshTokenService(db)
     token_data = token_service.get_valid_token(refresh_token)
     if not token_data:
-        return ApiResponse.unauthorized("Invalid or expired token", response=response)
+        return ApiResponse.unauthorized("Invalid or expired token")
 
     new_token = token_service.issue(token_data.account_id)
 
-    # Cookie更新
     response.set_cookie(
         key="refresh_token",
         value=new_token,
@@ -104,15 +96,10 @@ def refresh_token(
 
     account_service = AccountService(db)
     account_internal = account_service.get_by_id(token_data.account_id)
-
     account_data = AccountResponse.model_validate(account_internal.model_dump())
-    response_dto = RefreshResponse(account=account_data, access_token=new_token)
 
-    return ApiResponse.ok(
-        data=response_dto.model_dump(),
-        message="Token refreshed",
-        response=response,
-    )
+    response_dto = RefreshResponse(account=account_data, access_token=new_token)
+    return ApiResponse.ok(data=response_dto.model_dump(), response=response)
 
 
 # ---------------------------
@@ -125,18 +112,12 @@ def logout(
     db: Session = Depends(get_db),
 ):
     token_service = RefreshTokenService(db)
-
     if refresh_token:
         token_service.revoke(refresh_token)
 
     response.delete_cookie("refresh_token")
-
     response_dto = LogoutResponse()
-    return ApiResponse.ok(
-        data=response_dto.model_dump(),
-        message=response_dto.message,
-        response=response,
-    )
+    return ApiResponse.ok(data=response_dto.model_dump(), response=response)
 
 
 # ---------------------------
@@ -149,20 +130,16 @@ def get_me(
     db: Session = Depends(get_db),
 ):
     if not refresh_token:
-        return ApiResponse.unauthorized("Not authenticated", response=response)
+        return ApiResponse.unauthorized("Not authenticated")
 
     token_service = RefreshTokenService(db)
     token_data = token_service.get_valid_token(refresh_token)
     if not token_data:
-        return ApiResponse.unauthorized("Invalid token", response=response)
+        return ApiResponse.unauthorized("Invalid token")
 
     account_service = AccountService(db)
     account_internal = account_service.get_by_id(token_data.account_id)
-
     account_data = AccountResponse.model_validate(account_internal.model_dump())
-    response_dto = MeResponse(account=account_data)
 
-    return ApiResponse.ok(
-        data=response_dto.model_dump(),
-        response=response,
-    )
+    response_dto = MeResponse(account=account_data)
+    return ApiResponse.ok(data=response_dto.model_dump(), response=response)
