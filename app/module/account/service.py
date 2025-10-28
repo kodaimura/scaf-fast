@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-
 from .repository import AccountRepository
 from .schemas import AccountCreateDto, AccountDto
+from .model import Account
 
 
 class AccountService:
@@ -17,7 +17,12 @@ class AccountService:
                 detail="Email already registered",
             )
 
-        account = self.repo.create(data)
+        account = self.repo.create(Account(
+            email=data.email,
+            password_hash=data.password_hash,
+            first_name=data.first_name,
+            last_name=data.last_name,
+        ))
         return AccountDto.from_orm(account)
 
     def get_by_id(self, account_id: int) -> AccountDto:
