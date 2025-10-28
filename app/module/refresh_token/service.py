@@ -1,7 +1,10 @@
+from fastapi import HTTPException
 from datetime import datetime
 from sqlalchemy.orm import Session
-from app.core.crypto import generate_token, generate_expiry
-from app.module.refresh_token.repository import RefreshTokenRepository
+from app.core.crypto import generate_token, generate_expiry, hash_token
+from .model import RefreshToken
+from .repository import RefreshTokenRepository
+from app.core.config import settings
 
 
 class RefreshTokenService:
@@ -9,26 +12,33 @@ class RefreshTokenService:
         self.repo = RefreshTokenRepository(db)
 
     def issue(self, account_id: int) -> str:
-        token = generate_token()
-        expiry = generate_expiry(hours=24 * 7)
-        self.repo.create(account_id, token, expiry)
-        return token
+        token_plain = generate_token()
+        token_hash = hash_token(token_plain)
 
-    def revoke(self, token: str) -> bool:
-        token_obj = self.repo.get_by_token(token)
-        if not token_obj:
-            return False
+        self.repo.create(RefreshToken(
+            account_id=account_id,
+            token_hash=token_hash,
+            issued_at=datetime.utcnow(),
+            expires_at=generate_expiry(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+        ))
+        return token_plain
 
-        token_obj.revoked_at = datetime.utcnow()
-        self.repo.update(token_obj)
-        return True
+    def revoke(self, token_plain: str) -> None:
+        token_hash = hash_token(token_plain)
+        refresh_token = self.repo.get_by_token(token_hash)
+        if not refresh_token:
+            raise HTTPException(status_code=404, detail="Refresh token not found")
 
-    def get_valid_token(self, token: str):
-        token_obj = self.repo.get_by_token(token)
-        if not token_obj:
+        refresh_token.revoked_at = datetime.utcnow()
+        self.repo.update(refresh_token)
+
+    def get_valid_token(self, token_plain: str) -> RefreshToken | None:
+        token_hash = hash_token(token_plain)
+        refresh_token = self.repo.get_by_token(token_hash)
+        if not refresh_token:
             return None
 
-        if token_obj.revoked_at or token_obj.expires_at < datetime.utcnow():
+        if refresh_token.revoked_at or refresh_token.expires_at < datetime.utcnow():
             return None
 
-        return token_obj
+        return refresh_token

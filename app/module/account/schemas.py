@@ -4,7 +4,6 @@ from datetime import datetime
 class AccountDto(BaseModel):
     id: int
     email: EmailStr
-    password_hash: str
     first_name: str
     last_name: str
     created_at: datetime
@@ -15,7 +14,7 @@ class AccountDto(BaseModel):
 
 class AccountCreateDto(BaseModel):
     email: EmailStr
-    password_hash: str
+    password: str
     first_name: str
     last_name: str
 

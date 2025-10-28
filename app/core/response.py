@@ -1,5 +1,5 @@
 from typing import Any, Optional
-from fastapi import Response, status
+from fastapi import Response
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 
@@ -31,7 +31,7 @@ class ApiResponse:
         cls,
         data: Any = None,
         response: Optional[Response] = None,
-        status_code: int = status.HTTP_200_OK,
+        status_code: int = 200,
     ) -> JSONResponse:
         return cls._build_response(
             data=data,
@@ -50,7 +50,7 @@ class ApiResponse:
     ) -> JSONResponse:
         return cls._build_response(
             data=data,
-            status_code=status.HTTP_201_CREATED,
+            status_code=201,
             response=response,
         )
 
@@ -61,7 +61,7 @@ class ApiResponse:
     def error(
         cls,
         message: str = "Bad Request",
-        status_code: int = status.HTTP_400_BAD_REQUEST,
+        status_code: int = 400,
     ) -> JSONResponse:
         return cls._build_response(
             data={"detail": message},
@@ -75,7 +75,7 @@ class ApiResponse:
     def unauthorized(cls, message: str = "Unauthorized") -> JSONResponse:
         return cls._build_response(
             data={"detail": message},
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=401,
         )
 
     # ----------------------------------------
@@ -85,5 +85,5 @@ class ApiResponse:
     def not_found(cls, message: str = "Resource not found") -> JSONResponse:
         return cls._build_response(
             data={"detail": message},
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=404,
         )

@@ -9,11 +9,11 @@ class AccountRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def create(self, account: Account) -> Account:
-        self.db.add(account)
+    def create(self, entity: Account) -> Account:
+        self.db.add(entity)
         self.db.commit()
-        self.db.refresh(account)
-        return account
+        self.db.refresh(entity)
+        return entity
 
     def get_by_email(self, email: str) -> Optional[Account]:
         stmt = select(Account).where(

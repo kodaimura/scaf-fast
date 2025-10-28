@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Depends, Response, Cookie, HTTPException, status
+from fastapi import APIRouter, Depends, Response, Cookie
 from sqlalchemy.orm import Session
 from typing import Optional
 
 from app.core.database import get_db
 from app.core.response import ApiResponse
-from app.core.crypto import hash_password, verify_password
 from app.core.jwt import get_current_user
 from app.module.account.service import AccountService
 from app.module.account.schemas import AccountCreateDto
@@ -35,13 +34,12 @@ def signup(request: SignupRequest, response: Response, db: Session = Depends(get
         email=request.email,
         first_name=request.first_name,
         last_name=request.last_name,
-        password_hash=hash_password(request.password),
+        password=request.password,
     ))
 
     data = SignupResponse(
         account=AccountResponse.from_orm(account)
     )
-
     return ApiResponse.created(data=data, response=response)
 
 
@@ -53,9 +51,7 @@ def login(request: LoginRequest, response: Response, db: Session = Depends(get_d
     account_service = AccountService(db)
     refresh_service = RefreshTokenService(db)
 
-    account = account_service.get_by_email(request.email)
-    if not account or not verify_password(request.password, account.password_hash):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    account = account_service.authenticate(request.email, request.password)
 
     access_token = refresh_service.issue(account.id)
 
@@ -72,7 +68,6 @@ def login(request: LoginRequest, response: Response, db: Session = Depends(get_d
         account=AccountResponse.from_orm(account),
         access_token=access_token,
     )
-
     return ApiResponse.ok(data=data, response=response)
 
 

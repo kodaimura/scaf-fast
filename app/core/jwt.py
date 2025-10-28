@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
 from jose import jwt, JWTError
-from fastapi import Header, HTTPException, status
+from fastapi import Header, HTTPException
 from app.core.config import settings
 
 ALGORITHM = "HS256"
@@ -37,7 +37,7 @@ def decode_token(token: str) -> Optional[dict]:
 def verify_access_token(authorization: str = Header(None)) -> dict:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=401,
             detail="Missing or invalid Authorization header",
         )
 
@@ -46,7 +46,7 @@ def verify_access_token(authorization: str = Header(None)) -> dict:
 
     if not payload or payload.get("type") != "access":
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=401,
             detail="Invalid or expired access token",
         )
 
@@ -55,5 +55,4 @@ def verify_access_token(authorization: str = Header(None)) -> dict:
 
 # ======== FastAPI用依存関数 ======== #
 def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
-    """JWT検証 + payload返却"""
     return verify_access_token(authorization)

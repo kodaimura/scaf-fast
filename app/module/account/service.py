@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
-from fastapi import HTTPException, status
+from fastapi import HTTPException
+from app.core.crypto import hash_password, verify_password
 from .repository import AccountRepository
 from .schemas import AccountCreateDto, AccountDto
 from .model import Account
@@ -13,13 +14,13 @@ class AccountService:
         existing = self.repo.get_by_email(data.email)
         if existing:
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
+                status_code=409,
                 detail="Email already registered",
             )
 
         account = self.repo.create(Account(
             email=data.email,
-            password_hash=data.password_hash,
+            password_hash=hash_password(data.password),
             first_name=data.first_name,
             last_name=data.last_name,
         ))
@@ -29,11 +30,16 @@ class AccountService:
         account = self.repo.get_by_id(account_id)
         if not account:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=404,
                 detail="Account not found",
             )
         return AccountDto.from_orm(account)
-
-    def get_by_email(self, email: str) -> AccountDto | None:
+    
+    def authenticate(self, email: str, password: str):
         account = self.repo.get_by_email(email)
-        return AccountDto.from_orm(account) if account else None
+        if not account or not verify_password(password, account.password_hash):
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid credentials"
+            )
+        return account
