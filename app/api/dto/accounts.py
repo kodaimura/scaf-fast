@@ -9,8 +9,6 @@ from pydantic import BaseModel, EmailStr, Field
 
 
 class SignupRequest(BaseModel):
-    """サインアップ用リクエスト"""
-
     email: EmailStr
     first_name: str
     last_name: str
@@ -18,8 +16,6 @@ class SignupRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    """ログイン用リクエスト"""
-
     email: EmailStr
     password: str
 
@@ -30,8 +26,6 @@ class LoginRequest(BaseModel):
 
 
 class AccountResponse(BaseModel):
-    """共通アカウントレスポンス"""
-
     id: int
     email: EmailStr
     first_name: str
@@ -49,32 +43,22 @@ class AccountResponse(BaseModel):
 
 
 class SignupResponse(BaseModel):
-    """サインアップ後のレスポンス"""
-
     account: AccountResponse
 
 
 class LoginResponse(BaseModel):
-    """ログイン成功レスポンス"""
-
     account: AccountResponse
     access_token: str
 
 
 class RefreshResponse(BaseModel):
-    """トークンリフレッシュ時のレスポンス"""
-
     account: AccountResponse
     access_token: str
 
 
 class MeResponse(BaseModel):
-    """ログインユーザー情報取得レスポンス"""
-
     account: AccountResponse
 
 
 class LogoutResponse(BaseModel):
-    """ログアウト時のレスポンス"""
-
     message: str = Field(default="Logged out successfully")

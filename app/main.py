@@ -27,7 +27,6 @@ app.include_router(api_router, prefix="/api")
 
 @app.exception_handler(HTTPException)
 async def handle_http_exception(request: Request, exc: HTTPException):
-    """FastAPI標準のHTTP例外"""
     logger.warning(f"[HTTP {exc.status_code}] {exc.detail} - {request.url}")
     return ApiResponse.error(
         data={"message": exc.detail or "HTTP error"},
@@ -37,7 +36,6 @@ async def handle_http_exception(request: Request, exc: HTTPException):
 
 @app.exception_handler(SQLAlchemyError)
 async def handle_db_error(request: Request, exc: SQLAlchemyError):
-    """DB例外"""
     logger.error(f"[DB ERROR] {str(exc)} - {request.url}")
     return ApiResponse.error(
         data={"message": "Database error occurred", "detail": str(exc)},
@@ -47,7 +45,6 @@ async def handle_db_error(request: Request, exc: SQLAlchemyError):
 
 @app.exception_handler(ValidationError)
 async def handle_validation_error(request: Request, exc: ValidationError):
-    """バリデーション例外"""
     logger.info(f"[VALIDATION] {exc.errors()} - {request.url}")
     return ApiResponse.error(
         data={"message": "Validation error", "errors": exc.errors()},
@@ -57,7 +54,6 @@ async def handle_validation_error(request: Request, exc: ValidationError):
 
 @app.exception_handler(Exception)
 async def handle_generic_error(request: Request, exc: Exception):
-    """予期しない例外"""
     logger.exception(f"[UNEXPECTED] {type(exc).__name__}: {exc} - {request.url}")
     return ApiResponse.error(
         data={"message": "Internal server error", "detail": str(exc)},

@@ -5,7 +5,6 @@ from fastapi.encoders import jsonable_encoder
 
 
 class ApiResponse:
-    """アプリ全体で統一的に利用するAPIレスポンスモデル"""
 
     @staticmethod
     def _build_response(

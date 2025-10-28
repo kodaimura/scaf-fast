@@ -12,9 +12,7 @@ class Settings:
     DB_NAME: str = os.getenv("DB_NAME", "app")
     DB_USER: str = os.getenv("DB_USER", "postgres")
     DB_PASSWORD: str = os.getenv("DB_PASSWORD", "postgres")
-    DB_SSLMODE: str = os.getenv(
-        "DB_SSLMODE", "disable"
-    )  # disable/require/verify-fullなど
+    DB_SSLMODE: str = os.getenv("DB_SSLMODE", "disable")
 
     # === アプリ環境設定 ===
     APP_ENV: str = os.getenv("APP_ENV", "dev")

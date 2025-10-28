@@ -7,8 +7,6 @@ from .schemas import AccountCreate
 
 
 class AccountRepository:
-    """AccountモデルのDB操作専用リポジトリ"""
-
     def __init__(self, db: Session):
         self.db = db
 
@@ -16,7 +14,6 @@ class AccountRepository:
     # 作成
     # ---------------------------
     def create(self, data: AccountCreate, password_hash: str) -> Account:
-        """新規アカウント作成"""
         account = Account(
             email=data.email,
             password_hash=password_hash,
@@ -32,14 +29,12 @@ class AccountRepository:
     # 取得
     # ---------------------------
     def get_by_email(self, email: str) -> Optional[Account]:
-        """メールアドレスで取得"""
         stmt = select(Account).where(
             Account.email == email, Account.deleted_at.is_(None)
         )
         return self.db.scalars(stmt).first()
 
     def get_by_id(self, account_id: int) -> Optional[Account]:
-        """IDで取得"""
         stmt = select(Account).where(
             Account.id == account_id, Account.deleted_at.is_(None)
         )
@@ -49,7 +44,6 @@ class AccountRepository:
     # 論理削除
     # ---------------------------
     def soft_delete(self, account_id: int) -> bool:
-        """アカウント論理削除"""
         account = self.get_by_id(account_id)
         if not account:
             return False

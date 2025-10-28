@@ -13,8 +13,6 @@ class AccountCreate(AccountBase):
 
 
 class AccountInternal(AccountBase):
-    """DBから取得した内部用DTO"""
-
     id: int
     created_at: datetime
     updated_at: datetime

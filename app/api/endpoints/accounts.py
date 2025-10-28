@@ -144,24 +144,3 @@ def get_me(
 
     response_dto = MeResponse(account=account_data)
     return ApiResponse.ok(data=response_dto.model_dump(), response=response)
-
-
-@router.get("/me", response_model=MeResponse)
-def get_me(
-    response: Response,
-    payload: dict = Depends(verify_access_token),
-    db: Session = Depends(get_db),
-):
-    account_id = payload.get("sub")
-    if not account_id:
-        return ApiResponse.unauthorized("Invalid token payload")
-
-    account_service = AccountService(db)
-    account_internal = account_service.get_by_id(account_id)
-    if not account_internal:
-        return ApiResponse.not_found("Account not found")
-
-    account_data = AccountResponse.model_validate(account_internal.model_dump())
-    response_dto = MeResponse(account=account_data)
-
-    return ApiResponse.ok(data=response_dto.model_dump(), response=response)

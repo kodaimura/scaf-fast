@@ -13,7 +13,6 @@ DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 def get_logger(name: str = "app", level: int = logging.INFO) -> logging.Logger:
-    """アプリ全体で共通利用するロガーを生成"""
     logger = logging.getLogger(name)
 
     if logger.hasHandlers():
@@ -43,5 +42,4 @@ def get_logger(name: str = "app", level: int = logging.INFO) -> logging.Logger:
     return logger
 
 
-# --- グローバルロガー（例: app.logger で呼べる）---
 logger = get_logger()
