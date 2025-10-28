@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from datetime import datetime
 
 
-class RefreshTokenResponse(BaseModel):
+class RefreshTokenDto(BaseModel):
     id: int
     account_id: int
     issued_at: datetime

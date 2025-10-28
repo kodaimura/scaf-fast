@@ -10,9 +10,6 @@ class AccountRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    # ---------------------------
-    # 作成
-    # ---------------------------
     def create(self, data: AccountCreate, password_hash: str) -> Account:
         account = Account(
             email=data.email,
@@ -24,10 +21,7 @@ class AccountRepository:
         self.db.commit()
         self.db.refresh(account)
         return account
-
-    # ---------------------------
-    # 取得
-    # ---------------------------
+    
     def get_by_email(self, email: str) -> Optional[Account]:
         stmt = select(Account).where(
             Account.email == email, Account.deleted_at.is_(None)
@@ -40,9 +34,6 @@ class AccountRepository:
         )
         return self.db.scalars(stmt).first()
 
-    # ---------------------------
-    # 論理削除
-    # ---------------------------
     def soft_delete(self, account_id: int) -> bool:
         account = self.get_by_id(account_id)
         if not account:

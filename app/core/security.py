@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status, Header
+from fastapi import HTTPException, status, Header, Depends
 from datetime import datetime, timedelta
 from typing import Tuple, Optional
 from jose import jwt, JWTError
@@ -93,3 +93,12 @@ def hash_token(token: str) -> str:
 
 def generate_expiry(hours: int = 24) -> datetime:
     return datetime.utcnow() + timedelta(hours=hours)
+
+
+def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
+    """
+    FastAPI依存関数として使えるJWT検証関数。
+    成功すればpayloadを返し、失敗時はHTTPExceptionをraiseする。
+    """
+    payload = verify_access_token(authorization)
+    return payload

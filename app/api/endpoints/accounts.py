@@ -1,12 +1,13 @@
-from fastapi import Header, APIRouter, Depends, Response, Cookie
+from fastapi import APIRouter, Depends, Response, Cookie, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import Optional
 
 from app.core.database import get_db
 from app.core.response import ApiResponse
+from app.core.security import hash_password, verify_password, get_current_user
 from app.module.account.service import AccountService
+from app.module.account.schemas import AccountCreateDto
 from app.module.refresh_token.service import RefreshTokenService
-from app.core.security import verify_access_token
 
 from app.api.dto.accounts import (
     SignupRequest,
@@ -26,45 +27,52 @@ router = APIRouter()
 # サインアップ
 # ---------------------------
 @router.post("/signup", response_model=SignupResponse)
-def signup(data: SignupRequest, response: Response, db: Session = Depends(get_db)):
+def signup(request: SignupRequest, response: Response, db: Session = Depends(get_db)):
     account_service = AccountService(db)
-    account_internal = account_service.create(data)
-    account_data = AccountResponse.model_validate(account_internal.model_dump())
-    response_dto = SignupResponse(account=account_data)
 
-    return ApiResponse.created(
-        data=response_dto.model_dump(),
-        response=response,
+    account = account_service.create(AccountCreateDto(
+        email=request.email,
+        first_name=request.first_name,
+        last_name=request.last_name,
+        password_hash=hash_password(request.password),
+    ))
+
+    data = SignupResponse(
+        account=AccountResponse.from_orm(account)
     )
+
+    return ApiResponse.created(data=data, response=response)
 
 
 # ---------------------------
 # ログイン
 # ---------------------------
 @router.post("/login", response_model=LoginResponse)
-def login(response: Response, data: LoginRequest, db: Session = Depends(get_db)):
+def login(request: LoginRequest, response: Response, db: Session = Depends(get_db)):
     account_service = AccountService(db)
     refresh_service = RefreshTokenService(db)
 
-    account_internal = account_service.authenticate(data.email, data.password)
-    access_token = refresh_service.issue(account_internal.id)
+    account = account_service.get_by_email(request.email)
+    if not account or not verify_password(request.password, account.password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+    access_token = refresh_service.issue(account.id)
 
     response.set_cookie(
         key="refresh_token",
         value=access_token,
         httponly=True,
-        secure=False,  # 本番ではTrue
+        secure=False,  # 本番では True
         samesite="lax",
         path="/",
     )
 
-    account_data = AccountResponse.model_validate(account_internal.model_dump())
-    response_dto = LoginResponse(account=account_data, access_token=access_token)
-
-    return ApiResponse.ok(
-        data=response_dto.model_dump(),
-        response=response,
+    data = LoginResponse(
+        account=AccountResponse.from_orm(account),
+        access_token=access_token,
     )
+
+    return ApiResponse.ok(data=data, response=response)
 
 
 # ---------------------------
@@ -85,22 +93,24 @@ def refresh_token(
         return ApiResponse.unauthorized("Invalid or expired token")
 
     new_token = token_service.issue(token_data.account_id)
-
     response.set_cookie(
         key="refresh_token",
         value=new_token,
         httponly=True,
-        secure=False,
+        secure=False,  # 本番では True
         samesite="lax",
-        path="/accounts/refresh",
+        path="/",
     )
 
     account_service = AccountService(db)
-    account_internal = account_service.get_by_id(token_data.account_id)
-    account_data = AccountResponse.model_validate(account_internal.model_dump())
+    account = account_service.get_by_id(token_data.account_id)
 
-    response_dto = RefreshResponse(account=account_data, access_token=new_token)
-    return ApiResponse.ok(data=response_dto.model_dump(), response=response)
+    data = RefreshResponse(
+        account=AccountResponse.from_orm(account),
+        access_token=new_token,
+    )
+
+    return ApiResponse.ok(data=data, response=response)
 
 
 # ---------------------------
@@ -117,8 +127,8 @@ def logout(
         token_service.revoke(refresh_token)
 
     response.delete_cookie("refresh_token")
-    response_dto = LogoutResponse()
-    return ApiResponse.ok(data=response_dto.model_dump(), response=response)
+    data = LogoutResponse()
+    return ApiResponse.ok(data=data, response=response)
 
 
 # ---------------------------
@@ -127,20 +137,12 @@ def logout(
 @router.get("/me", response_model=MeResponse)
 def get_me(
     response: Response,
-    refresh_token: Optional[str] = Cookie(None),
+    payload: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    if not refresh_token:
-        return ApiResponse.unauthorized("Not authenticated")
-
-    token_service = RefreshTokenService(db)
-    token_data = token_service.get_valid_token(refresh_token)
-    if not token_data:
-        return ApiResponse.unauthorized("Invalid token")
-
     account_service = AccountService(db)
-    account_internal = account_service.get_by_id(token_data.account_id)
-    account_data = AccountResponse.model_validate(account_internal.model_dump())
+    account = account_service.get_by_id(payload["sub"])
 
-    response_dto = MeResponse(account=account_data)
-    return ApiResponse.ok(data=response_dto.model_dump(), response=response)
+    data = MeResponse(account=AccountResponse.from_orm(account))
+    return ApiResponse.ok(data=data, response=response)
+
