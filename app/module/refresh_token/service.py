@@ -13,13 +13,12 @@ class RefreshTokenService:
 
     def issue(self, account_id: int) -> str:
         token_plain = generate_token()
-        token_hash = hash_token(token_plain)
 
         self.repo.create(RefreshToken(
             account_id=account_id,
-            token_hash=token_hash,
+            token_hash=hash_token(token_plain),
             issued_at=datetime.utcnow(),
-            expires_at=generate_expiry(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+            expires_at=generate_expiry(hours=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24),
         ))
         return token_plain
 

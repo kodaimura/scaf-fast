@@ -60,11 +60,11 @@ class ApiResponse:
     @classmethod
     def error(
         cls,
-        message: str = "Bad Request",
+        data: Any = None,
         status_code: int = 400,
     ) -> JSONResponse:
         return cls._build_response(
-            data={"detail": message},
+            data=data,
             status_code=status_code,
         )
 

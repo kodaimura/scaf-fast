@@ -51,8 +51,3 @@ def verify_access_token(authorization: str = Header(None)) -> dict:
         )
 
     return payload
-
-
-# ======== FastAPI用依存関数 ======== #
-def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
-    return verify_access_token(authorization)

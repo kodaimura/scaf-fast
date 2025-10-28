@@ -52,7 +52,6 @@ class LoginResponse(BaseModel):
 
 
 class RefreshResponse(BaseModel):
-    account: AccountResponse
     access_token: str
 
 
@@ -61,4 +60,4 @@ class MeResponse(BaseModel):
 
 
 class LogoutResponse(BaseModel):
-    message: str = Field(default="Logged out successfully")
+    pass

@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, Response, Cookie
+from fastapi import APIRouter, Depends, Response, Cookie, HTTPException
 from sqlalchemy.orm import Session
 from typing import Optional
 
 from app.core.database import get_db
 from app.core.response import ApiResponse
-from app.core.jwt import get_current_user
+from app.core.jwt import verify_access_token
 from app.module.account.service import AccountService
 from app.module.account.schemas import AccountCreateDto
 from app.module.refresh_token.service import RefreshTokenService
@@ -81,29 +81,31 @@ def refresh_token(
     db: Session = Depends(get_db),
 ):
     if not refresh_token:
-        return ApiResponse.unauthorized("Missing refresh token")
+        raise HTTPException(
+            status_code=401,
+            detail="Missing refresh token"
+        )
 
     token_service = RefreshTokenService(db)
     token_data = token_service.get_valid_token(refresh_token)
     if not token_data:
-        return ApiResponse.unauthorized("Invalid or expired token")
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token"
+        )
 
-    new_token = token_service.issue(token_data.account_id)
+    access_token = token_service.issue(token_data.account_id)
     response.set_cookie(
         key="refresh_token",
-        value=new_token,
+        value=access_token,
         httponly=True,
         secure=False,  # 本番では True
         samesite="lax",
         path="/",
     )
 
-    account_service = AccountService(db)
-    account = account_service.get_by_id(token_data.account_id)
-
     data = RefreshResponse(
-        account=AccountResponse.from_orm(account),
-        access_token=new_token,
+        access_token=access_token,
     )
 
     return ApiResponse.ok(data=data, response=response)
@@ -133,7 +135,7 @@ def logout(
 @router.get("/me", response_model=MeResponse)
 def get_me(
     response: Response,
-    payload: dict = Depends(get_current_user),
+    payload: dict = Depends(verify_access_token),
     db: Session = Depends(get_db),
 ):
     account_service = AccountService(db)

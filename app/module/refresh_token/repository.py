@@ -15,8 +15,7 @@ class RefreshTokenRepository:
         self.db.refresh(entity)
         return entity
 
-    def get_by_token(self, token: str) -> RefreshToken | None:
-        token_hash = hash_token(token)
+    def get_by_token(self, token_hash: str) -> RefreshToken | None:
         stmt = select(RefreshToken).where(RefreshToken.token_hash == token_hash)
         return self.db.scalars(stmt).first()
 
