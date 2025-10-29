@@ -1,4 +1,6 @@
 .DS_Store
 __pycache__/
 data/
+redis_data/
+pg_data/
 logs/
