@@ -1,9 +1,6 @@
 import os
-from typing import Optional
-from urllib.parse import quote_plus
 
-
-class Settings:
+class Config:
     # === アプリ環境設定 ===
     APP_ENV: str = os.getenv("APP_ENV", "dev")
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
@@ -25,4 +22,4 @@ class Settings:
     REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
 
-settings = Settings()
+config = Config()
