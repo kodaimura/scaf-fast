@@ -10,8 +10,8 @@ class AccountService:
     def __init__(self, db: Session):
         self.repo = AccountRepository(db)
 
-    def create(self, data: AccountCreateDto) -> AccountDto:
-        existing = self.repo.get_by_email(data.email)
+    def create(self, dto: AccountCreateDto) -> AccountDto:
+        existing = self.repo.get_by_email(dto.email)
         if existing:
             raise HTTPException(
                 status_code=409,
@@ -19,10 +19,10 @@ class AccountService:
             )
 
         account = self.repo.create(Account(
-            email=data.email,
-            password_hash=hash_password(data.password),
-            first_name=data.first_name,
-            last_name=data.last_name,
+            email=dto.email,
+            password_hash=hash_password(dto.password),
+            first_name=dto.first_name,
+            last_name=dto.last_name,
         ))
         return AccountDto.from_orm(account)
 

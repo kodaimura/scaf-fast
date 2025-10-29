@@ -1,13 +1,15 @@
 from fastapi import APIRouter, Depends, Response, Cookie, HTTPException
 from sqlalchemy.orm import Session
 from typing import Optional
+from datetime import datetime, timezone
 
 from app.core.database import get_db
 from app.core.response import ApiResponse
-from app.core.jwt import verify_access_token
+from app.core.jwt import verify_access_token, create_token_pair, decode_token
 from app.module.account.service import AccountService
 from app.module.account.schemas import AccountCreateDto
-from app.module.refresh_token.service import RefreshTokenService
+from app.module.blacklist_jti.service import BlacklistJtiService
+from app.module.blacklist_jti.schemas import BlacklistJtiDto
 
 from app.api.dto.accounts import (
     SignupRequest,
@@ -30,16 +32,16 @@ router = APIRouter()
 def signup(request: SignupRequest, response: Response, db: Session = Depends(get_db)):
     account_service = AccountService(db)
 
-    account = account_service.create(AccountCreateDto(
-        email=request.email,
-        first_name=request.first_name,
-        last_name=request.last_name,
-        password=request.password,
-    ))
-
-    data = SignupResponse(
-        account=AccountResponse.from_orm(account)
+    account = account_service.create(
+        AccountCreateDto(
+            email=request.email,
+            first_name=request.first_name,
+            last_name=request.last_name,
+            password=request.password,
+        )
     )
+
+    data = SignupResponse(account=AccountResponse.from_orm(account))
     return ApiResponse.created(data=data, response=response)
 
 
@@ -49,15 +51,16 @@ def signup(request: SignupRequest, response: Response, db: Session = Depends(get
 @router.post("/login", response_model=LoginResponse)
 def login(request: LoginRequest, response: Response, db: Session = Depends(get_db)):
     account_service = AccountService(db)
-    refresh_service = RefreshTokenService(db)
 
     account = account_service.authenticate(request.email, request.password)
 
-    access_token = refresh_service.issue(account.id)
+    # JWTペアを発行
+    access_token, refresh_token = create_token_pair(str(account.id))
 
+    # Cookieにリフレッシュトークンを設定
     response.set_cookie(
         key="refresh_token",
-        value=access_token,
+        value=refresh_token,
         httponly=True,
         secure=False,  # 本番では True
         samesite="lax",
@@ -81,33 +84,47 @@ def refresh_token(
     db: Session = Depends(get_db),
 ):
     if not refresh_token:
-        raise HTTPException(
-            status_code=401,
-            detail="Missing refresh token"
-        )
+        raise HTTPException(status_code=401, detail="Missing refresh token")
 
-    token_service = RefreshTokenService(db)
-    token_data = token_service.get_valid_token(refresh_token)
-    if not token_data:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid or expired token"
-        )
+    payload = decode_token(refresh_token)
+    if not payload or payload.get("type") != "refresh":
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
 
-    access_token = token_service.issue(token_data.account_id)
+    jti = payload.get("jti")
+    sub = payload.get("sub")
+    exp = payload.get("exp")
+
+    if not jti or not sub:
+        raise HTTPException(status_code=400, detail="Malformed token")
+
+    blacklist_service = BlacklistJtiService(db)
+
+    # ブラックリストに登録済みか確認
+    if blacklist_service.exists(jti):
+        raise HTTPException(status_code=401, detail="Token has been revoked")
+
+    # 古いリフレッシュトークンをブラックリストへ登録（ローテーション対応）
+    dto = BlacklistJtiDto(
+        jti=jti,
+        account_id=int(sub),
+        expires_at=datetime.fromtimestamp(exp, tz=timezone.utc),
+    )
+    blacklist_service.add(dto)
+
+    # 新しいJWTペアを発行
+    access_token, new_refresh_token = create_token_pair(sub)
+
+    # Cookie更新
     response.set_cookie(
         key="refresh_token",
-        value=access_token,
+        value=new_refresh_token,
         httponly=True,
         secure=False,  # 本番では True
         samesite="lax",
         path="/",
     )
 
-    data = RefreshResponse(
-        access_token=access_token,
-    )
-
+    data = RefreshResponse(access_token=access_token)
     return ApiResponse.ok(data=data, response=response)
 
 
@@ -120,13 +137,25 @@ def logout(
     refresh_token: Optional[str] = Cookie(None),
     db: Session = Depends(get_db),
 ):
-    token_service = RefreshTokenService(db)
+    blacklist_service = BlacklistJtiService(db)
+
     if refresh_token:
-        token_service.revoke(refresh_token)
+        payload = decode_token(refresh_token)
+        if payload and payload.get("type") == "refresh":
+            jti = payload.get("jti")
+            sub = payload.get("sub")
+            exp = payload.get("exp")
+
+            if jti and sub and exp:
+                dto = BlacklistJtiDto(
+                    jti=jti,
+                    account_id=int(sub),
+                    expires_at=datetime.fromtimestamp(exp, tz=timezone.utc),
+                )
+                blacklist_service.add(dto)
 
     response.delete_cookie("refresh_token")
-    data = LogoutResponse()
-    return ApiResponse.ok(data=data, response=response)
+    return ApiResponse.ok(data=LogoutResponse(), response=response)
 
 
 # ---------------------------
@@ -143,4 +172,3 @@ def get_me(
 
     data = MeResponse(account=AccountResponse.from_orm(account))
     return ApiResponse.ok(data=data, response=response)
-
