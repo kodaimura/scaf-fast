@@ -34,8 +34,8 @@ def signup(
     response: Response,
     db: Session = Depends(get_db),
 ):
+    
     account_service = AccountService(db)
-
     account = account_service.create(
         AccountCreateDto(
             email=request.email,
@@ -57,9 +57,11 @@ def login(
     request: LoginRequest,
     response: Response,
     db: Session = Depends(get_db),
-):
+) -> ApiResponse:
+    
     account_service = AccountService(db)
     account = account_service.authenticate(request.email, request.password)
+
     access_token, refresh_token = create_token_pair(account.id)
 
     response.set_cookie(
@@ -85,7 +87,8 @@ def login(
 def refresh_token(
     response: Response,
     refresh_token: Optional[str] = Cookie(None),
-):
+) -> ApiResponse:
+
     if not refresh_token:
         raise HTTPException(status_code=401, detail="Missing refresh token")
 
@@ -109,15 +112,15 @@ def refresh_token(
     return ApiResponse.ok(data=data, response=response)
 
 
-
 # ---------------------------
-# ログアウト（ここでのみブラックリスト登録）
+# ログアウト
 # ---------------------------
 @router.post("/logout", response_model=LogoutResponse)
 def logout(
     response: Response,
     refresh_token: Optional[str] = Cookie(None),
-):
+) -> ApiResponse:
+
     if refresh_token:
         payload = decode_token(refresh_token)
         if payload and payload.get("type") == "refresh":
@@ -146,7 +149,8 @@ def get_me(
     response: Response,
     account_id: int = Depends(get_account_id),
     db: Session = Depends(get_db),
-):
+) -> ApiResponse:
+    
     account_service = AccountService(db)
     account = account_service.get_by_id(account_id)
 
