@@ -6,3 +6,4 @@ psycopg[binary]
 python-jose[cryptography]
 bcrypt
 pydantic[email]
+redis

@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - ./pg_data:/var/lib/postgresql/data
     # - ./seed:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d project_db"]
@@ -14,7 +14,21 @@ services:
       timeout: 3s
       retries: 20
 
-  web:
+  redis:
+    image: redis:8.2
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  app:
     build:
       context: .
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
@@ -25,10 +39,13 @@ services:
       - ./logs:/app/logs
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/project_db
+      REDIS_URL: redis://redis:6379/0
       APP_ENV: dev
       DEBUG: "true"
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     tty: true
 
@@ -44,6 +61,3 @@ services:
       db:
         condition: service_healthy
     command: alembic upgrade head
-
-volumes:
-  pg_data:
