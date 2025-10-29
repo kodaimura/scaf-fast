@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Response, Cookie, HTTPException
 from sqlalchemy.orm import Session
 from typing import Optional
 from datetime import datetime, timezone
+from app.core.config import config
 
 from app.core.database import get_db
 from app.core.response import ApiResponse
@@ -68,7 +69,7 @@ def login(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=False,  # 本番では True に
+        secure=(config.APP_ENV == "production"),
         samesite="lax",
         path="/",
     )

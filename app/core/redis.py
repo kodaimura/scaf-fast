@@ -1,4 +1,3 @@
-import os
 import redis
 from app.core.config import config
 
