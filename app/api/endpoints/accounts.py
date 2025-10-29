@@ -6,7 +6,12 @@ from app.core.config import config
 
 from app.core.database import get_db
 from app.core.response import ApiResponse
-from app.core.jwt import get_account_id, create_token_pair, decode_token, create_access_token
+from app.core.jwt import (
+    get_account_id,
+    create_token_pair,
+    decode_token,
+    create_access_token,
+)
 from app.module.account.service import AccountService
 from app.module.account.schemas import AccountCreateDto
 from app.module.blacklist.service import BlacklistService
@@ -35,7 +40,7 @@ def signup(
     response: Response,
     db: Session = Depends(get_db),
 ):
-    
+
     account_service = AccountService(db)
     account = account_service.create(
         AccountCreateDto(
@@ -59,7 +64,7 @@ def login(
     response: Response,
     db: Session = Depends(get_db),
 ) -> ApiResponse:
-    
+
     account_service = AccountService(db)
     account = account_service.authenticate(request.email, request.password)
 
@@ -151,7 +156,7 @@ def get_me(
     account_id: int = Depends(get_account_id),
     db: Session = Depends(get_db),
 ) -> ApiResponse:
-    
+
     account_service = AccountService(db)
     account = account_service.get_by_id(account_id)
 

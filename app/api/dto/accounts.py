@@ -6,6 +6,7 @@ from pydantic import BaseModel, EmailStr
 # Request DTO
 # ==============================
 
+
 class SignupRequest(BaseModel):
     email: EmailStr
     first_name: str
@@ -21,6 +22,7 @@ class LoginRequest(BaseModel):
 # ==============================
 # Response DTO
 # ==============================
+
 
 class AccountResponse(BaseModel):
     id: int

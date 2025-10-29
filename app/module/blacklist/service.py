@@ -1,4 +1,3 @@
-from datetime import datetime
 from app.module.blacklist.repository import BlacklistRepository
 from app.module.blacklist.schemas import BlacklistAddDto
 

@@ -1,5 +1,6 @@
 import os
 
+
 class Config:
     # === アプリ環境設定 ===
     APP_ENV: str = os.getenv("APP_ENV", "dev")
