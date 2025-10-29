@@ -1,14 +1,12 @@
+from fastapi import Header, HTTPException, Depends
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple
 from uuid import uuid4
 from jose import jwt, JWTError
-from fastapi import Header, HTTPException
 from app.core.config import settings
 
 ALGORITHM = "HS256"
 
-
-# ======== JWT作成・検証 ======== #
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -31,8 +29,8 @@ def create_refresh_token(data: dict) -> str:
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
 
 
-def create_token_pair(user_id: str) -> Tuple[str, str]:
-    data = {"sub": user_id}
+def create_token_pair(account_id: int) -> Tuple[str, str]:
+    data = {"sub": account_id}
     return create_access_token(data), create_refresh_token(data)
 
 
@@ -60,3 +58,14 @@ def verify_access_token(authorization: str = Header(None)) -> dict:
         )
 
     return payload
+
+
+def get_account_id(payload: dict = Depends(verify_access_token)) -> int:
+    sub = payload.get("sub")
+    if sub is None:
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+
+    try:
+        return int(sub)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid subject format")

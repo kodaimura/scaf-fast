@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 from app.core.database import get_db
 from app.core.response import ApiResponse
-from app.core.jwt import verify_access_token, create_token_pair, decode_token, create_access_token
+from app.core.jwt import get_account_id, create_token_pair, decode_token, create_access_token
 from app.module.account.service import AccountService
 from app.module.account.schemas import AccountCreateDto
 from app.module.blacklist.service import BlacklistService
@@ -60,11 +60,8 @@ def login(
 ):
     account_service = AccountService(db)
     account = account_service.authenticate(request.email, request.password)
+    access_token, refresh_token = create_token_pair(account.id)
 
-    # JWTペア発行
-    access_token, refresh_token = create_token_pair(str(account.id))
-
-    # Cookieにrefreshトークンを設定
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
@@ -103,12 +100,9 @@ def refresh_token(
         raise HTTPException(status_code=400, detail="Malformed token")
 
     blacklist_service = BlacklistService()
-
-    # ブラックリスト登録済みなら無効
     if blacklist_service.is_revoked(jti):
         raise HTTPException(status_code=401, detail="Token has been revoked")
 
-    # access_token のみ再発行（refreshは再利用）
     access_token = create_access_token({"sub": sub})
 
     data = RefreshResponse(access_token=access_token)
@@ -124,8 +118,6 @@ def logout(
     response: Response,
     refresh_token: Optional[str] = Cookie(None),
 ):
-    blacklist_service = BlacklistService()
-
     if refresh_token:
         payload = decode_token(refresh_token)
         if payload and payload.get("type") == "refresh":
@@ -133,13 +125,14 @@ def logout(
             exp = payload.get("exp")
 
             if jti and exp:
-                dto = BlacklistAddDto(
-                    jti=jti,
-                    expires_at=datetime.fromtimestamp(exp, tz=timezone.utc),
+                blacklist_service = BlacklistService()
+                blacklist_service.add(
+                    BlacklistAddDto(
+                        jti=jti,
+                        expires_at=datetime.fromtimestamp(exp, tz=timezone.utc),
+                    )
                 )
-                blacklist_service.add(dto)
 
-    # Cookie削除
     response.delete_cookie("refresh_token")
 
     return ApiResponse.ok(data=LogoutResponse(), response=response)
@@ -151,11 +144,11 @@ def logout(
 @router.get("/me", response_model=MeResponse)
 def get_me(
     response: Response,
-    payload: dict = Depends(verify_access_token),
+    account_id: int = Depends(get_account_id),
     db: Session = Depends(get_db),
 ):
     account_service = AccountService(db)
-    account = account_service.get_by_id(int(payload["sub"]))
+    account = account_service.get_by_id(account_id)
 
     data = MeResponse(account=AccountResponse.from_orm(account))
     return ApiResponse.ok(data=data, response=response)

@@ -1,12 +1,10 @@
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr
 
 
 # ==============================
 # Request DTO
 # ==============================
-
 
 class SignupRequest(BaseModel):
     email: EmailStr
@@ -21,9 +19,8 @@ class LoginRequest(BaseModel):
 
 
 # ==============================
-# Response DTO（共通単位）
+# Response DTO
 # ==============================
-
 
 class AccountResponse(BaseModel):
     id: int
@@ -35,11 +32,6 @@ class AccountResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
-
-# ==============================
-# Response DTO（API単位）
-# ==============================
 
 
 class SignupResponse(BaseModel):
