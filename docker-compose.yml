@@ -41,7 +41,7 @@ services:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/project_db
       REDIS_URL: redis://redis:6379/0
       APP_ENV: dev
-      DEBUG: "true"
+      LOG_LEVEL: DEBUG
       ACCESS_TOKEN_SECRET: randomstring
       ACCESS_TOKEN_EXPIRES_SECONDS: 900
       REFRESH_TOKEN_SECRET: randomstring

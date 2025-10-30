@@ -4,7 +4,7 @@ import os
 class Config:
     # === アプリ環境設定 ===
     APP_ENV: str = os.getenv("APP_ENV", "dev")
-    DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     FRONTEND_ORIGINS: list[str] = os.getenv(
         "FRONTEND_ORIGINS", "http://localhost:3000,http://localhost:5173"
     ).split(",")

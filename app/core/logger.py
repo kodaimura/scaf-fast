@@ -2,21 +2,23 @@ import logging
 import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from app.core.config import config
 
 
 LOG_DIR = Path("logs")
 LOG_DIR.mkdir(exist_ok=True)
 LOG_FORMAT = "[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s"
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+LOG_LEVEL = config.LOG_LEVEL.upper()
 
 
-def get_logger(name: str = "app", level: int = logging.INFO) -> logging.Logger:
+def get_logger(name: str = "app") -> logging.Logger:
     logger = logging.getLogger(name)
 
     if logger.hasHandlers():
         return logger
 
-    logger.setLevel(level)
+    logger.setLevel(getattr(logging, LOG_LEVEL, logging.INFO))
 
     stream_handler = logging.StreamHandler(sys.stdout)
     stream_handler.setFormatter(logging.Formatter(LOG_FORMAT, DATE_FORMAT))
