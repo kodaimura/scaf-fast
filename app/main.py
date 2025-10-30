@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import SQLAlchemyError
 from pydantic import ValidationError
+from app.core.config import config
 from app.core.response import ApiResponse
 from app.core.logger import logger
 from app.api.router import api_router
@@ -11,7 +12,7 @@ app = FastAPI(title="scaf-fast", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_origins=config.FRONTEND_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
