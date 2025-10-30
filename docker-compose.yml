@@ -41,7 +41,7 @@ services:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/project_db
       REDIS_URL: redis://redis:6379/0
       APP_ENV: dev
-      DEBUG: "true"
+      DEBUG: true
     depends_on:
       db:
         condition: service_healthy
