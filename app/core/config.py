@@ -16,11 +16,14 @@ class Config:
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
     # === 認証関連設定 ===
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "default-secret-key")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(
-        os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
+    ACCESS_TOKEN_SECRET: str = os.getenv("ACCESS_TOKEN_SECRET", "randomstring")
+    ACCESS_TOKEN_EXPIRES_SECONDS: int = int(
+        os.getenv("ACCESS_TOKEN_EXPIRES_SECONDS", 900)
     )
-    REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
+    REFRESH_TOKEN_SECRET: str = os.getenv("REFRESH_TOKEN_SECRET", "randomstring")
+    REFRESH_TOKEN_EXPIRES_SECONDS: int = int(
+        os.getenv("REFRESH_TOKEN_EXPIRES_SECONDS", 2592000)
+    )
 
 
 config = Config()

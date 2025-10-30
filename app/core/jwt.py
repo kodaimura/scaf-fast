@@ -12,7 +12,7 @@ def create_access_token(data: dict) -> str:
     data["sub"] = str(data["sub"])
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(
-        minutes=config.ACCESS_TOKEN_EXPIRE_MINUTES
+        seconds=config.ACCESS_TOKEN_EXPIRES_SECONDS
     )
     to_encode.update(
         {
@@ -21,14 +21,14 @@ def create_access_token(data: dict) -> str:
             "jti": str(uuid4()),
         }
     )
-    return jwt.encode(to_encode, config.SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, config.ACCESS_TOKEN_SECRET, algorithm=ALGORITHM)
 
 
 def create_refresh_token(data: dict) -> str:
     data["sub"] = str(data["sub"])
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(
-        days=config.REFRESH_TOKEN_EXPIRE_DAYS
+        seconds=config.REFRESH_TOKEN_EXPIRES_SECONDS
     )
     to_encode.update(
         {
@@ -37,7 +37,7 @@ def create_refresh_token(data: dict) -> str:
             "jti": str(uuid4()),
         }
     )
-    return jwt.encode(to_encode, config.SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, config.REFRESH_TOKEN_SECRET, algorithm=ALGORITHM)
 
 
 def create_token_pair(account_id: int | str) -> Tuple[str, str]:
@@ -45,9 +45,16 @@ def create_token_pair(account_id: int | str) -> Tuple[str, str]:
     return create_access_token(data), create_refresh_token(data)
 
 
-def decode_token(token: str) -> Optional[dict]:
+def decode_access_token(token: str) -> Optional[dict]:
     try:
-        return jwt.decode(token, config.SECRET_KEY, algorithms=[ALGORITHM])
+        return jwt.decode(token, config.ACCESS_TOKEN_SECRET, algorithms=[ALGORITHM])
+    except JWTError:
+        return None
+
+
+def decode_refresh_token(token: str) -> Optional[dict]:
+    try:
+        return jwt.decode(token, config.REFRESH_TOKEN_SECRET, algorithms=[ALGORITHM])
     except JWTError:
         return None
 
@@ -60,7 +67,7 @@ def verify_access_token(authorization: str = Header(None)) -> dict:
         )
 
     token = authorization.split(" ")[1]
-    payload = decode_token(token)
+    payload = decode_access_token(token)
 
     if not payload or payload.get("type") != "access":
         raise HTTPException(

@@ -9,8 +9,8 @@ from app.core.response import ApiResponse
 from app.core.jwt import (
     get_account_id,
     create_token_pair,
-    decode_token,
     create_access_token,
+    decode_refresh_token,
 )
 from app.module.account.service import AccountService
 from app.module.account.schemas import AccountCreateDto
@@ -98,7 +98,7 @@ def refresh_token(
     if not refresh_token:
         raise HTTPException(status_code=401, detail="Missing refresh token")
 
-    payload = decode_token(refresh_token)
+    payload = decode_refresh_token(refresh_token)
     if not payload or payload.get("type") != "refresh":
         raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
 
@@ -128,7 +128,7 @@ def logout(
 ) -> ApiResponse:
 
     if refresh_token:
-        payload = decode_token(refresh_token)
+        payload = decode_refresh_token(refresh_token)
         if payload and payload.get("type") == "refresh":
             jti = payload.get("jti")
             exp = payload.get("exp")
