@@ -10,7 +10,7 @@ from app.core.jwt import (
     get_account_id,
     create_token_pair,
     create_access_token,
-    decode_refresh_token,
+    verify_refresh_token,
 )
 from app.module.account.service import AccountService
 from app.module.account.schemas import AccountCreateDto
@@ -92,15 +92,8 @@ def login(
 @router.post("/refresh", response_model=RefreshResponse)
 def refresh_token(
     response: Response,
-    refresh_token: Optional[str] = Cookie(None),
+    payload: dict = Depends(verify_refresh_token),
 ) -> ApiResponse:
-
-    if not refresh_token:
-        raise HTTPException(status_code=401, detail="Missing refresh token")
-
-    payload = decode_refresh_token(refresh_token)
-    if not payload or payload.get("type") != "refresh":
-        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
 
     jti = payload.get("jti")
     sub = payload.get("sub")
@@ -124,25 +117,28 @@ def refresh_token(
 @router.post("/logout", response_model=LogoutResponse)
 def logout(
     response: Response,
-    refresh_token: Optional[str] = Cookie(None),
+    payload: dict = Depends(verify_refresh_token),
 ) -> ApiResponse:
 
-    if refresh_token:
-        payload = decode_refresh_token(refresh_token)
-        if payload and payload.get("type") == "refresh":
-            jti = payload.get("jti")
-            exp = payload.get("exp")
+    jti = payload.get("jti")
+    exp = payload.get("exp")
 
-            if jti and exp:
-                blacklist_service = BlacklistService()
-                blacklist_service.add(
-                    BlacklistAddDto(
-                        jti=jti,
-                        expires_at=datetime.fromtimestamp(exp, tz=timezone.utc),
-                    )
-                )
+    if jti and exp:
+        blacklist_service = BlacklistService()
+        blacklist_service.add(
+            BlacklistAddDto(
+                jti=jti,
+                expires_at=datetime.fromtimestamp(exp, tz=timezone.utc),
+            )
+        )
 
-    response.delete_cookie("refresh_token")
+    response.delete_cookie(
+        key="refresh_token",
+        httponly=True,
+        secure=(config.APP_ENV == "production"),
+        samesite="lax",
+        path="/",
+    )
 
     return ApiResponse.ok(data=LogoutResponse(), response=response)
 

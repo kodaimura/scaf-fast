@@ -1,4 +1,4 @@
-from fastapi import Header, HTTPException, Depends
+from fastapi import Header, HTTPException, Depends, Cookie
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple
 from uuid import uuid4
@@ -73,6 +73,24 @@ def verify_access_token(authorization: str = Header(None)) -> dict:
         raise HTTPException(
             status_code=401,
             detail="Invalid or expired access token",
+        )
+
+    return payload
+
+
+def verify_refresh_token(refresh_token: Optional[str] = Cookie(None)) -> dict:
+    if not refresh_token:
+        raise HTTPException(
+            status_code=401,
+            detail="Missing refresh token",
+        )
+
+    payload = decode_refresh_token(refresh_token)
+
+    if not payload or payload.get("type") != "refresh":
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired refresh token",
         )
 
     return payload
