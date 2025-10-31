@@ -14,7 +14,7 @@ from app.usecases.account.refresh import RefreshUsecase, RefreshInput
 from app.usecases.account.logout import LogoutUsecase, LogoutInput
 from app.usecases.account.get_me import GetMeUsecase, GetMeInput
 
-from .dto.accounts import (
+from .dto import (
     SignupRequest,
     SignupResponse,
     LoginRequest,
