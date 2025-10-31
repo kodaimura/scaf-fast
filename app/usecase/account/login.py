@@ -1,8 +1,7 @@
 from dataclasses import dataclass
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from app.module.account.model import Account
-from app.module.account.module import AccountModule
+from app.module.account.module import AccountModule, Account
 from app.core.crypto import verify_password
 from app.core.jwt import create_token_pair
 
