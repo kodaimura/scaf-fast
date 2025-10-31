@@ -26,4 +26,4 @@ class AccountModule:
         return self.repo.delete(entity, soft=soft)
 
 
-__all__ = ["Account", "AccountModule"]
+__all__ = ["AccountModule", "Account"]
