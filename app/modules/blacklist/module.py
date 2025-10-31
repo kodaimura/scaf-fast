@@ -3,7 +3,7 @@ from app.modules.blacklist.schemas import BlacklistAddDto
 from app.core.config import config
 
 
-class BlacklistService:
+class BlacklistModule:
     def __init__(self):
         self.enabled = config.USE_BLACKLIST
         self.repo = BlacklistRepository() if self.enabled else None
@@ -18,3 +18,8 @@ class BlacklistService:
         if not self.enabled:
             return False
         return self.repo.exists(jti)
+
+    def delete(self, jti: str):
+        if not self.enabled:
+            return
+        self.repo.delete(jti)

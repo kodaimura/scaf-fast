@@ -1,0 +1,25 @@
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from fastapi import HTTPException
+from app.modules.blacklist.module import BlacklistModule
+from app.modules.blacklist.schemas import BlacklistAddDto
+
+
+@dataclass(frozen=True)
+class LogoutInput:
+    jti: str
+    exp: int
+
+
+class LogoutUsecase:
+    def execute(self, input: LogoutInput) -> None:
+        if not input.jti or not input.exp:
+            raise HTTPException(status_code=400, detail="Malformed token")
+
+        module = BlacklistModule()
+        module.add(
+            BlacklistAddDto(
+                jti=input.jti,
+                expires_at=datetime.fromtimestamp(input.exp, tz=timezone.utc),
+            )
+        )
