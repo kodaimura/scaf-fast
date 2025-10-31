@@ -5,7 +5,7 @@ from pydantic import ValidationError
 from app.core.config import config
 from app.core.response import ApiResponse
 from app.core.logger import logger
-from .router import api_router
+from app.api.router import api_router
 
 
 app = FastAPI(title="scaf-fast", version="1.0.0")

@@ -10,5 +10,3 @@ __pycache__/
 dist/
 build/
 data/
-pg_data/
-logs/
