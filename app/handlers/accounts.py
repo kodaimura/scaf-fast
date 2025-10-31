@@ -1,6 +1,5 @@
-from fastapi import APIRouter, Depends, Response, Cookie, HTTPException
+from fastapi import APIRouter, Depends, Response, HTTPException
 from sqlalchemy.orm import Session
-from typing import Optional
 from datetime import datetime, timezone
 from app.core.config import config
 
@@ -12,12 +11,12 @@ from app.core.jwt import (
     create_access_token,
     verify_refresh_token,
 )
-from app.module.account.service import AccountService
-from app.module.account.schemas import AccountCreateDto
-from app.module.blacklist.service import BlacklistService
-from app.module.blacklist.schemas import BlacklistAddDto
+from app.modules.account.service import AccountService
+from app.modules.account.schemas import AccountCreateDto
+from app.modules.blacklist.service import BlacklistService
+from app.modules.blacklist.schemas import BlacklistAddDto
 
-from app.api.dto.accounts import (
+from .dto.accounts import (
     SignupRequest,
     SignupResponse,
     LoginRequest,
