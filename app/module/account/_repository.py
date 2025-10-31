@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.core.repository import BaseRepository
-from .model import Account
+from ._model import Account
 
 
 class AccountRepository(BaseRepository[Account]):

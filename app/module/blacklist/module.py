@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from app.core.redis import get_redis
 from app.core.config import config
-from .dto import BlacklistAddDto
+from ._dto import BlacklistAddDto
 
 
 class BlacklistModule:
