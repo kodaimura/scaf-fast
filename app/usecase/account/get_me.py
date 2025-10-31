@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from app.modules.account.module import AccountModule
-from app.modules.account.model import Account
+from app.module.account.module import AccountModule
+from app.module.account.model import Account
 
 
 @dataclass(frozen=True)

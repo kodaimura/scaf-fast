@@ -8,8 +8,7 @@ class AccountModule:
     def __init__(self, db: Session):
         self.repo = AccountRepository(db)
 
-    def create(self, **kwargs) -> Account:
-        entity = Account(**kwargs)
+    def create(self, entity: Account) -> Account:
         return self.repo.create(entity)
 
     def get_by_id(self, account_id: int) -> Optional[Account]:
@@ -25,3 +24,6 @@ class AccountModule:
 
     def delete(self, entity: Account, soft: bool = True) -> bool:
         return self.repo.delete(entity, soft=soft)
+
+
+__all__ = ["Account", "AccountModule"]

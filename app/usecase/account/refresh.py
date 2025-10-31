@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from fastapi import HTTPException
-from app.modules.blacklist.module import BlacklistModule
+from app.module.blacklist.module import BlacklistModule
 from app.core.jwt import create_access_token
 
 

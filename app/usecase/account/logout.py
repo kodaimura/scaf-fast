@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from fastapi import HTTPException
-from app.modules.blacklist.module import BlacklistModule
-from app.modules.blacklist.schemas import BlacklistAddDto
+from app.module.blacklist.module import BlacklistModule
+from app.module.blacklist.schemas import BlacklistAddDto
 
 
 @dataclass(frozen=True)

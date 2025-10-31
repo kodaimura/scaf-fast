@@ -1,5 +1,5 @@
-from app.modules.blacklist.repository import BlacklistRepository
-from app.modules.blacklist.schemas import BlacklistAddDto
+from app.module.blacklist.repository import BlacklistRepository
+from app.module.blacklist.schemas import BlacklistAddDto
 from app.core.config import config
 
 

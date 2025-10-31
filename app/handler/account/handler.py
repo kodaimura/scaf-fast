@@ -8,11 +8,11 @@ from app.core.jwt import (
     get_account_id,
     verify_refresh_token,
 )
-from app.usecases.account.signup import SignupUsecase, SignupInput
-from app.usecases.account.login import LoginUsecase, LoginInput
-from app.usecases.account.refresh import RefreshUsecase, RefreshInput
-from app.usecases.account.logout import LogoutUsecase, LogoutInput
-from app.usecases.account.get_me import GetMeUsecase, GetMeInput
+from app.usecase.account.signup import SignupUsecase, SignupInput
+from app.usecase.account.login import LoginUsecase, LoginInput
+from app.usecase.account.refresh import RefreshUsecase, RefreshInput
+from app.usecase.account.logout import LogoutUsecase, LogoutInput
+from app.usecase.account.get_me import GetMeUsecase, GetMeInput
 
 from .dto import (
     SignupRequest,

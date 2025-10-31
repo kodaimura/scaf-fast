@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from app.modules.account.module import AccountModule
-from app.modules.account.model import Account
+from app.module.account.module import AccountModule
+from app.module.account.model import Account
 from app.core.crypto import hash_password
 
 
@@ -26,10 +26,12 @@ class SignupUsecase:
 
         hashed = hash_password(input.password)
         account = self.module.create(
-            email=input.email,
-            password_hash=hashed,
-            first_name=input.first_name,
-            last_name=input.last_name,
+            Account(
+                email=input.email,
+                password_hash=hashed,
+                first_name=input.first_name,
+                last_name=input.last_name,
+            )
         )
 
         self.db.commit()
