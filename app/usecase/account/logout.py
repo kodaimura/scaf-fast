@@ -11,6 +11,9 @@ class LogoutInput:
 
 
 class LogoutUsecase:
+    def __init__(self):
+        pass
+
     def execute(self, input: LogoutInput) -> None:
         if not input.jti or not input.exp:
             raise HTTPException(status_code=400, detail="Malformed token")

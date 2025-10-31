@@ -61,7 +61,6 @@ def login(request: LoginRequest, response: Response, db: Session = Depends(get_d
         account=AccountResponse.from_orm(result.account),
         access_token=result.access_token,
     )
-
     return ApiResponse.ok(data=data, response=response)
 
 
@@ -102,8 +101,6 @@ def get_me(
     db: Session = Depends(get_db),
 ):
     usecase = GetMeUsecase(db)
-    input = GetMeInput(account_id=account_id)
-
-    account = usecase.execute(input)
+    account = usecase.execute(GetMeInput(account_id=account_id))
     data = MeResponse(account=AccountResponse.from_orm(account))
     return ApiResponse.ok(data=data, response=response)

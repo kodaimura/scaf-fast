@@ -16,6 +16,9 @@ class RefreshResult:
 
 
 class RefreshUsecase:
+    def __init__(self):
+        pass
+
     def execute(self, input: RefreshInput) -> RefreshResult:
         if not input.jti or not input.sub:
             raise HTTPException(status_code=400, detail="Malformed token")
