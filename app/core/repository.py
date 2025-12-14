@@ -18,8 +18,8 @@ class BaseRepository(Generic[T]):
         return entity
 
     def update(self, entity: T) -> T:
-        self.db.flush()
-        self.db.refresh(entity)
+        # self.db.flush()
+        # self.db.refresh(entity)
         return entity
 
     def delete(self, entity: T, soft: bool = True) -> bool:
@@ -55,4 +55,5 @@ class BaseRepository(Generic[T]):
             conditions.append(self.model.deleted_at.is_(None))
         if conditions:
             stmt = stmt.where(*conditions)
+        stmt = stmt.order_by(self.model.id)
         return self.db.scalars(stmt).all()
