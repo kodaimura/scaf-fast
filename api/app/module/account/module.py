@@ -1,7 +1,7 @@
 from typing import Optional
 from sqlalchemy.orm import Session
 from ._repository import AccountRepository
-from ._model import Account
+from .model import Account
 
 
 class AccountModule:

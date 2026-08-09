@@ -9,7 +9,7 @@ import importlib
 import app.module
 
 for module_info in pkgutil.walk_packages(app.module.__path__, "app.module."):
-    if module_info.name.endswith("._model"):
+    if module_info.name.endswith(".model"):
         importlib.import_module(module_info.name)
 
 engine = create_engine(config.DATABASE_URL, pool_pre_ping=True, future=True)
