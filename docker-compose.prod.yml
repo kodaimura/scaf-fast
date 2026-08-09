@@ -11,12 +11,12 @@ services:
       timeout: 5s
       retries: 10
 
-  app:
+  api:
     build:
-      context: .
+      context: ./api
     restart: always
     env_file:
-      - .env
+      - ./api/.env
     command: gunicorn app.main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 4
     ports:
       - "8000:8000"
@@ -26,9 +26,9 @@ services:
 
   migrate:
     build:
-      context: .
+      context: ./api
     env_file:
-      - .env
+      - ./api/.env
     command: alembic upgrade head
     restart: "no"
 

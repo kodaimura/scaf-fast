@@ -22,10 +22,10 @@ stop:
 	$(DOCKER_COMPOSE_CMD) stop
 
 exec:
-	$(DOCKER_COMPOSE_CMD) exec app /bin/bash
+	$(DOCKER_COMPOSE_CMD) exec api /bin/bash
 
 logs:
-	$(DOCKER_COMPOSE_CMD) logs -f app
+	$(DOCKER_COMPOSE_CMD) logs -f api
 
 ps:
 	$(DOCKER_COMPOSE_CMD) ps
@@ -73,8 +73,8 @@ help:
 	@echo "  build           Build containers without cache"
 	@echo "  down            Stop and remove containers, networks, and volumes"
 	@echo "  stop            Stop containers only"
-	@echo "  exec            Enter app container shell"
-	@echo "  logs            Show app logs"
+	@echo "  exec            Enter api container shell"
+	@echo "  logs            Show api logs"
 	@echo "  ps              Show container status"
 	@echo "  reup            Restart environment (down + up)"
 	@echo ""
