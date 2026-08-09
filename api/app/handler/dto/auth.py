@@ -49,9 +49,5 @@ class RefreshResponse(BaseModel):
     access_token: str
 
 
-class MeResponse(BaseModel):
-    account: AccountResponse
-
-
 class LogoutResponse(BaseModel):
     pass

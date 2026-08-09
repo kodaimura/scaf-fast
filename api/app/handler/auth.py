@@ -3,32 +3,26 @@ from sqlalchemy.orm import Session
 
 from app.core.config import config
 from app.core.database import get_db
+from app.core.jwt import verify_refresh_token
 from app.core.response import ApiResponse
-from app.core.jwt import (
-    get_account_id,
-    verify_refresh_token,
-)
-from app.usecase.account.signup import SignupUsecase, SignupInput
-from app.usecase.account.login import LoginUsecase, LoginInput
-from app.usecase.account.refresh import RefreshUsecase, RefreshInput
-from app.usecase.account.logout import LogoutUsecase, LogoutInput
-from app.usecase.account.get_me import GetMeUsecase, GetMeInput
-
-from .dto import (
-    SignupRequest,
-    SignupResponse,
+from app.handler.dto.auth import (
+    AccountResponse,
     LoginRequest,
     LoginResponse,
-    RefreshResponse,
     LogoutResponse,
-    MeResponse,
-    AccountResponse,
+    RefreshResponse,
+    SignupRequest,
+    SignupResponse,
 )
+from app.usecase.auth.login import LoginInput, LoginUsecase
+from app.usecase.auth.logout import LogoutInput, LogoutUsecase
+from app.usecase.auth.refresh import RefreshInput, RefreshUsecase
+from app.usecase.auth.signup import SignupInput, SignupUsecase
 
 router = APIRouter()
 
 
-@router.post("/signup", response_model=SignupResponse)
+@router.post("/auth/signup", response_model=SignupResponse)
 def signup(request: SignupRequest, response: Response, db: Session = Depends(get_db)):
     usecase = SignupUsecase(db)
     account = usecase.execute(
@@ -43,7 +37,7 @@ def signup(request: SignupRequest, response: Response, db: Session = Depends(get
     return ApiResponse.created(data=data, response=response)
 
 
-@router.post("/login", response_model=LoginResponse)
+@router.post("/auth/login", response_model=LoginResponse)
 def login(request: LoginRequest, response: Response, db: Session = Depends(get_db)):
     usecase = LoginUsecase(db)
     result = usecase.execute(LoginInput(email=request.email, password=request.password))
@@ -64,7 +58,7 @@ def login(request: LoginRequest, response: Response, db: Session = Depends(get_d
     return ApiResponse.ok(data=data, response=response)
 
 
-@router.post("/refresh", response_model=RefreshResponse)
+@router.post("/auth/refresh", response_model=RefreshResponse)
 def refresh_token(response: Response, payload: dict = Depends(verify_refresh_token)):
     usecase = RefreshUsecase()
     result = usecase.execute(
@@ -77,7 +71,7 @@ def refresh_token(response: Response, payload: dict = Depends(verify_refresh_tok
     return ApiResponse.ok(data=data, response=response)
 
 
-@router.post("/logout", response_model=LogoutResponse)
+@router.post("/auth/logout", response_model=LogoutResponse)
 def logout(response: Response, payload: dict = Depends(verify_refresh_token)):
     usecase = LogoutUsecase()
     input = LogoutInput(jti=payload.get("jti"), exp=payload.get("exp"))
@@ -92,15 +86,3 @@ def logout(response: Response, payload: dict = Depends(verify_refresh_token)):
     )
 
     return ApiResponse.ok(data=LogoutResponse(), response=response)
-
-
-@router.get("/me", response_model=MeResponse)
-def get_me(
-    response: Response,
-    account_id: int = Depends(get_account_id),
-    db: Session = Depends(get_db),
-):
-    usecase = GetMeUsecase(db)
-    account = usecase.execute(GetMeInput(account_id=account_id))
-    data = MeResponse(account=AccountResponse.from_orm(account))
-    return ApiResponse.ok(data=data, response=response)
