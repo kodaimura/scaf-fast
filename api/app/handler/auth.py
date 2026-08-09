@@ -27,6 +27,7 @@ def signup(request: SignupRequest, response: Response, db: Session = Depends(get
     usecase = SignupUsecase(db)
     account = usecase.execute(
         SignupInput(
+            login_id=request.login_id,
             email=request.email,
             password=request.password,
             first_name=request.first_name,
@@ -40,7 +41,19 @@ def signup(request: SignupRequest, response: Response, db: Session = Depends(get
 @router.post("/auth/login", response_model=LoginResponse)
 def login(request: LoginRequest, response: Response, db: Session = Depends(get_db)):
     usecase = LoginUsecase(db)
-    result = usecase.execute(LoginInput(email=request.email, password=request.password))
+    result = usecase.execute(
+        LoginInput(
+            login_id=request.login_id,
+            password=request.password,
+            remember_me=request.remember_me,
+        )
+    )
+
+    refresh_token_max_age = (
+        config.REFRESH_TOKEN_REMEMBER_ME_EXPIRES_SECONDS
+        if request.remember_me
+        else config.REFRESH_TOKEN_EXPIRES_SECONDS
+    )
 
     response.set_cookie(
         key="refresh_token",
@@ -49,6 +62,7 @@ def login(request: LoginRequest, response: Response, db: Session = Depends(get_d
         secure=(config.APP_ENV == "production"),
         samesite="lax",
         path="/",
+        max_age=refresh_token_max_age,
     )
 
     data = LoginResponse(
@@ -59,12 +73,17 @@ def login(request: LoginRequest, response: Response, db: Session = Depends(get_d
 
 
 @router.post("/auth/refresh", response_model=RefreshResponse)
-def refresh_token(response: Response, payload: dict = Depends(verify_refresh_token)):
-    usecase = RefreshUsecase()
+def refresh_token(
+    response: Response,
+    payload: dict = Depends(verify_refresh_token),
+    db: Session = Depends(get_db),
+):
+    usecase = RefreshUsecase(db)
     result = usecase.execute(
         RefreshInput(
             jti=payload.get("jti"),
             sub=payload.get("sub"),
+            token_version=payload.get("token_version"),
         )
     )
     data = RefreshResponse(access_token=result.access_token)

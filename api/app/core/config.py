@@ -28,6 +28,9 @@ class Config:
     REFRESH_TOKEN_EXPIRES_SECONDS: int = int(
         os.getenv("REFRESH_TOKEN_EXPIRES_SECONDS", 2592000)
     )
+    REFRESH_TOKEN_REMEMBER_ME_EXPIRES_SECONDS: int = int(
+        os.getenv("REFRESH_TOKEN_REMEMBER_ME_EXPIRES_SECONDS", 2592000)
+    )
 
 
 config = Config()

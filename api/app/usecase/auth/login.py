@@ -1,15 +1,16 @@
 from dataclasses import dataclass
-from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from app.module.account.module import AccountModule, Account
 from app.core.crypto import verify_password
+from app.core.error import AppError, ErrorCode
 from app.core.jwt import create_token_pair
 
 
 @dataclass(frozen=True)
 class LoginInput:
-    email: str
+    login_id: str
     password: str
+    remember_me: bool
 
 
 @dataclass(frozen=True)
@@ -24,12 +25,19 @@ class LoginUsecase:
         self.module = AccountModule(db)
 
     def execute(self, input: LoginInput) -> LoginResult:
-        account = self.module.get_by_email(input.email)
+        account = self.module.get_by_login_id(input.login_id)
 
         if not account or not verify_password(input.password, account.password_hash):
-            raise HTTPException(status_code=401, detail="Invalid credentials")
+            raise AppError(code=ErrorCode.INVALID_CREDENTIALS)
 
-        access_token, refresh_token = create_token_pair(account.id)
+        if account.disabled_at is not None:
+            raise AppError(code=ErrorCode.ACCOUNT_DISABLED)
+
+        access_token, refresh_token = create_token_pair(
+            account.id,
+            account.token_version,
+            input.remember_me,
+        )
 
         return LoginResult(
             account=account,

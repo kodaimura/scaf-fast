@@ -24,10 +24,13 @@ def upgrade() -> None:
     op.create_table(
         "account",
         sa.Column("id", sa.BigInteger, primary_key=True, autoincrement=True),
-        sa.Column("email", sa.Text, nullable=False, unique=True),
+        sa.Column("email", sa.Text, nullable=True, unique=True),
+        sa.Column("login_id", sa.Text, nullable=False, unique=True),
         sa.Column("password_hash", sa.Text, nullable=False),
+        sa.Column("token_version", sa.Integer, server_default="1", nullable=False),
         sa.Column("first_name", sa.String(100), nullable=False),
         sa.Column("last_name", sa.String(100), nullable=False),
+        sa.Column("disabled_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("deleted_at", sa.DateTime, nullable=True),
         sa.Column(
             "created_at",

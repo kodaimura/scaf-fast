@@ -1,12 +1,13 @@
 from dataclasses import dataclass
-from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from app.module.account.module import AccountModule, Account
 from app.core.crypto import hash_password
+from app.core.error import AppError, ErrorCode
 
 
 @dataclass(frozen=True)
 class SignupInput:
+    login_id: str
     email: str
     password: str
     first_name: str
@@ -19,13 +20,18 @@ class SignupUsecase:
         self.module = AccountModule(db)
 
     def execute(self, input: SignupInput) -> Account:
-        existing = self.module.get_by_email(input.email)
-        if existing:
-            raise HTTPException(status_code=409, detail="Email already registered")
+        existing_login_id = self.module.get_by_login_id(input.login_id)
+        if existing_login_id:
+            raise AppError(code=ErrorCode.LOGIN_ID_ALREADY_EXISTS)
+
+        existing_email = self.module.get_by_email(input.email)
+        if existing_email:
+            raise AppError(code=ErrorCode.EMAIL_ALREADY_EXISTS)
 
         hashed = hash_password(input.password)
         account = self.module.create(
             Account(
+                login_id=input.login_id,
                 email=input.email,
                 password_hash=hashed,
                 first_name=input.first_name,

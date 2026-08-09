@@ -8,6 +8,7 @@ from pydantic import BaseModel, EmailStr
 
 
 class SignupRequest(BaseModel):
+    login_id: str
     email: EmailStr
     first_name: str
     last_name: str
@@ -15,8 +16,9 @@ class SignupRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    login_id: str
     password: str
+    remember_me: bool = False
 
 
 # ==============================
@@ -26,7 +28,8 @@ class LoginRequest(BaseModel):
 
 class AccountResponse(BaseModel):
     id: int
-    email: EmailStr
+    email: EmailStr | None = None
+    login_id: str
     first_name: str
     last_name: str
     created_at: datetime

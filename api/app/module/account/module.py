@@ -19,6 +19,10 @@ class AccountModule:
         entity = Account(email=email)
         return self.repo.get_one(entity)
 
+    def get_by_login_id(self, login_id: str) -> Optional[Account]:
+        entity = Account(login_id=login_id)
+        return self.repo.get_one(entity)
+
     def update(self, entity: Account) -> Account:
         return self.repo.update(entity)
 

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
-from fastapi import HTTPException
+from sqlalchemy.orm import Session
+from app.core.error import AppError, ErrorCode
 from app.module.blacklist.module import BlacklistModule
+from app.module.account import AccountModule
 from app.core.jwt import create_access_token
 
 
@@ -8,6 +10,7 @@ from app.core.jwt import create_access_token
 class RefreshInput:
     jti: str
     sub: str
+    token_version: int
 
 
 @dataclass(frozen=True)
@@ -16,16 +19,36 @@ class RefreshResult:
 
 
 class RefreshUsecase:
-    def __init__(self):
-        pass
+    def __init__(self, db: Session):
+        self.account_module = AccountModule(db)
 
     def execute(self, input: RefreshInput) -> RefreshResult:
-        if not input.jti or not input.sub:
-            raise HTTPException(status_code=400, detail="Malformed token")
+        if not input.jti or not input.sub or input.token_version is None:
+            raise AppError(code=ErrorCode.MALFORMED_TOKEN)
 
         module = BlacklistModule()
         if module.is_revoked(input.jti):
-            raise HTTPException(status_code=401, detail="Token has been revoked")
+            raise AppError(code=ErrorCode.TOKEN_REVOKED)
 
-        access_token = create_access_token({"sub": input.sub})
+        try:
+            account_id = int(input.sub)
+        except ValueError:
+            raise AppError(code=ErrorCode.AUTH_INVALID_SUBJECT)
+
+        account = self.account_module.get_by_id(account_id)
+        if not account:
+            raise AppError(code=ErrorCode.AUTH_NOT_FOUND)
+
+        if account.disabled_at is not None:
+            raise AppError(code=ErrorCode.ACCOUNT_DISABLED)
+
+        if input.token_version != account.token_version:
+            raise AppError(code=ErrorCode.AUTH_TOKEN_REVOKED)
+
+        access_token = create_access_token(
+            {
+                "sub": input.sub,
+                "token_version": input.token_version,
+            }
+        )
         return RefreshResult(access_token=access_token)

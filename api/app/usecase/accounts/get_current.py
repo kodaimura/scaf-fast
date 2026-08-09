@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
+from app.core.error import AppError, ErrorCode
 from app.module.account.module import AccountModule, Account
 
 
@@ -16,5 +16,5 @@ class GetCurrentAccountUsecase:
     def execute(self, input: GetCurrentAccountInput) -> Account:
         account = self.module.get_by_id(input.account_id)
         if not account:
-            raise HTTPException(status_code=404, detail="Account not found")
+            raise AppError(code=ErrorCode.ACCOUNT_NOT_FOUND)
         return account

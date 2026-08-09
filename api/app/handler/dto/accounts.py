@@ -4,7 +4,8 @@ from pydantic import BaseModel, EmailStr
 
 class AccountResponse(BaseModel):
     id: int
-    email: EmailStr
+    email: EmailStr | None = None
+    login_id: str
     first_name: str
     last_name: str
     created_at: datetime

@@ -47,7 +47,8 @@ services:
       ACCESS_TOKEN_SECRET: randomstring
       ACCESS_TOKEN_EXPIRES_SECONDS: 900
       REFRESH_TOKEN_SECRET: randomstring
-      REFRESH_TOKEN_EXPIRES_SECONDS: 2592000
+      REFRESH_TOKEN_EXPIRES_SECONDS: 43200
+      REFRESH_TOKEN_REMEMBER_ME_EXPIRES_SECONDS: 2592000
     depends_on:
       db:
         condition: service_healthy
