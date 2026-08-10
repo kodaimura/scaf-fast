@@ -43,6 +43,7 @@ class Config:
     )
 
     # === Mail ===
+    MAIL_PROVIDER: str = os.getenv("MAIL_PROVIDER", "mailhog").lower()
     MAIL_FROM: str = os.getenv("MAIL_FROM", "no-reply@example.local")
     SMTP_HOST: str | None = os.getenv("SMTP_HOST")
     SMTP_PORT: int = int(os.getenv("SMTP_PORT", 587))

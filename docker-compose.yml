@@ -42,6 +42,7 @@ services:
       PASSWORD_RESET_URL_BASE: http://localhost:3000/reset-password
       PASSWORD_RESET_TOKEN_EXPIRES_MINUTES: 30
       PASSWORD_RESET_RESEND_INTERVAL_MINUTES: 5
+      MAIL_PROVIDER: mailhog
       MAIL_FROM: no-reply@example.local
       SMTP_HOST: mailhog
       SMTP_PORT: 1025
