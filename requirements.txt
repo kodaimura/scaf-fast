@@ -1,9 +1,0 @@
-fastapi
-uvicorn
-alembic
-sqlalchemy
-psycopg[binary]
-python-jose[cryptography]
-bcrypt
-pydantic[email]
-redis

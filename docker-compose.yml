@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     volumes:
-      - ./pg_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     # - ./seed:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d project_db"]
@@ -14,56 +14,72 @@ services:
       timeout: 3s
       retries: 20
 
-  redis:
-    image: redis:8.2
-    container_name: redis
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    platform: linux/amd64
     ports:
-      - "6379:6379"
-    volumes:
-      - ./redis_data:/data
-    command: ["redis-server", "--appendonly", "yes"]
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 2s
-      timeout: 3s
-      retries: 20
+      - "8025:8025"
 
-  app:
+  api:
     build:
-      context: .
+      context: ./api
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8000:8000"
     volumes:
-      - .:/app
-      - ./logs:/app/logs
+      - ./api:/app
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/project_db
-      REDIS_URL: redis://redis:6379/0
       APP_ENV: dev
       LOG_LEVEL: DEBUG
-      USE_BLACKLIST: false
+      ENABLE_SIGNUP: true
+      AUTH_LOGIN_ID_MODE: email
       FRONTEND_ORIGINS: http://localhost:3000,http://localhost:5173
       ACCESS_TOKEN_SECRET: randomstring
       ACCESS_TOKEN_EXPIRES_SECONDS: 900
       REFRESH_TOKEN_SECRET: randomstring
-      REFRESH_TOKEN_EXPIRES_SECONDS: 2592000
+      REFRESH_TOKEN_EXPIRES_SECONDS: 43200
+      REFRESH_TOKEN_REMEMBER_ME_EXPIRES_SECONDS: 2592000
+      PASSWORD_RESET_URL_BASE: http://localhost:3000/reset-password
+      PASSWORD_RESET_TOKEN_EXPIRES_MINUTES: 30
+      PASSWORD_RESET_RESEND_INTERVAL_MINUTES: 5
+      MAIL_PROVIDER: mailhog
+      MAIL_FROM: no-reply@example.local
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      SMTP_USERNAME:
+      SMTP_PASSWORD:
+      SMTP_USE_TLS: false
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).read()",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
     tty: true
 
   migrate:
     build:
-      context: .
+      context: ./api
+    profiles:
+      - tools
     working_dir: /app
     volumes:
-      - .:/app
+      - ./api:/app
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/project_db
     depends_on:
       db:
         condition: service_healthy
     command: alembic upgrade head
+
+volumes:
+  postgres_data:
