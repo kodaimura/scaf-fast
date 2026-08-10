@@ -1,6 +1,13 @@
 from datetime import datetime
 from pydantic import BaseModel, EmailStr
 
+from app.handler.dto.constraints import (
+    PasswordString,
+    String100,
+    String255,
+    TokenString,
+)
+
 
 # ==============================
 # Request DTO
@@ -8,16 +15,16 @@ from pydantic import BaseModel, EmailStr
 
 
 class SignupRequest(BaseModel):
-    login_id: str | None = None
+    login_id: String255 | None = None
     email: EmailStr | None = None
-    first_name: str
-    last_name: str
-    password: str
+    first_name: String100
+    last_name: String100
+    password: PasswordString
 
 
 class LoginRequest(BaseModel):
-    login_id: str
-    password: str
+    login_id: String255
+    password: String255
     remember_me: bool = False
 
 
@@ -26,8 +33,8 @@ class ForgotPasswordRequest(BaseModel):
 
 
 class ResetPasswordRequest(BaseModel):
-    token: str
-    new_password: str
+    token: TokenString
+    new_password: PasswordString
 
 
 # ==============================
@@ -60,7 +67,3 @@ class LoginResponse(BaseModel):
 
 class RefreshResponse(BaseModel):
     access_token: str
-
-
-class LogoutResponse(BaseModel):
-    pass

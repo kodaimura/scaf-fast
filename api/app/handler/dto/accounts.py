@@ -1,6 +1,8 @@
 from datetime import datetime
 from pydantic import BaseModel, EmailStr
 
+from app.handler.dto.constraints import PasswordString, String100, String255
+
 
 class AccountResponse(BaseModel):
     id: int
@@ -17,19 +19,19 @@ class AccountResponse(BaseModel):
 
 
 class PostAccountRequest(BaseModel):
-    login_id: str | None = None
+    login_id: String255 | None = None
     email: EmailStr | None = None
-    first_name: str
-    last_name: str
-    password: str
+    first_name: String100
+    last_name: String100
+    password: PasswordString
 
 
 class PutAccountRequest(BaseModel):
-    login_id: str | None = None
+    login_id: String255 | None = None
     email: EmailStr | None = None
-    first_name: str
-    last_name: str
-    password: str | None = None
+    first_name: String100
+    last_name: String100
+    password: PasswordString | None = None
 
 
 class GetAccountsResponse(BaseModel):
