@@ -9,7 +9,7 @@ MIGRATE_SERVICE := migrate
 
 .DEFAULT_GOAL := help
 
-.PHONY: up build build_no_cache down down_volumes stop exec shell logs ps reup check routes requirements_compile migrate downgrade history heads current makemigration help
+.PHONY: up build build_no_cache down down_volumes stop exec shell logs ps reup check smoke routes requirements_compile migrate downgrade history heads current makemigration help
 
 ## -----------------------------
 ## Base Commands
@@ -48,7 +48,10 @@ ps:
 reup: down up
 
 check:
-	$(DOCKER_COMPOSE_CMD) run --rm --no-deps $(API_SERVICE) python -m compileall -q app
+	$(DOCKER_COMPOSE_CMD) run --rm --no-deps $(API_SERVICE) python -c "import pathlib; [compile(path.read_text(), str(path), 'exec') for path in pathlib.Path('app').rglob('*.py')]"
+
+smoke:
+	$(DOCKER_COMPOSE_CMD) exec -T $(API_SERVICE) python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).read().decode())"
 
 routes:
 	$(DOCKER_COMPOSE_CMD) run --rm --no-deps $(API_SERVICE) python -c "from app.main import app; print('\n'.join(sorted(app.openapi().get('paths', {}).keys())))"
@@ -110,6 +113,7 @@ help:
 	@echo "  ps              Show container status"
 	@echo "  reup            Restart environment (down + up)"
 	@echo "  check           Compile Python files inside the api container"
+	@echo "  smoke           Call /health from the running api container"
 	@echo "  routes          Print FastAPI route paths from the api container"
 	@echo "  requirements_compile"
 	@echo "                  Compile pinned Python requirements with pip-tools"

@@ -5,10 +5,14 @@ __pycache__/
 *.pyd
 .mypy_cache/
 .pytest_cache/
+.coverage
+htmlcov/
 .env
 .venv/
 dist/
 build/
+*.sqlite3
+*.db
 data/
 pg_data/
 logs/

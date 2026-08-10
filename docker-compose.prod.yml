@@ -28,6 +28,8 @@ services:
   migrate:
     build:
       context: ./api
+    profiles:
+      - tools
     init: true
     env_file:
       - ./api/.env
