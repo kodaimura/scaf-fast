@@ -2,6 +2,8 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import SQLAlchemyError
+import time
+
 from app.core.config import config
 from app.core.response import ApiResponse
 from app.core.logger import logger
@@ -37,7 +39,26 @@ app.include_router(api_router, prefix="/api")
 
 @app.middleware("http")
 async def security_middleware(request: Request, call_next):
+    start = time.time()
+
     response = await call_next(request)
+
+    duration_ms = int((time.time() - start) * 1000)
+    account_id = getattr(request.state, "account_id", None)
+    account = {"id": account_id} if account_id is not None else None
+
+    if request.method != "OPTIONS":
+        logger.info(
+            "access",
+            extra={
+                "method": request.method,
+                "path": request.url.path,
+                "status_code": response.status_code,
+                "duration_ms": duration_ms,
+                "client": request.client.host if request.client else None,
+                "account": account,
+            },
+        )
 
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"

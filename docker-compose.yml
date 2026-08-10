@@ -36,7 +36,6 @@ services:
       - "8000:8000"
     volumes:
       - ./api:/app
-      - ./api/logs:/app/logs
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/project_db
       REDIS_URL: redis://redis:6379/0
