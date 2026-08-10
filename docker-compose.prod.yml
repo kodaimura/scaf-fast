@@ -1,16 +1,4 @@
 services:
-  redis:
-    image: redis:8.2
-    restart: always
-    command: ["redis-server", "--appendonly", "yes"]
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
   api:
     build:
       context: ./api
@@ -20,9 +8,6 @@ services:
     command: gunicorn app.main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 4
     ports:
       - "8000:8000"
-    depends_on:
-      redis:
-        condition: service_healthy
 
   migrate:
     build:
@@ -31,6 +16,3 @@ services:
       - ./api/.env
     command: alembic upgrade head
     restart: "no"
-
-volumes:
-  redis_data:

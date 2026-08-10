@@ -1,14 +1,12 @@
 from dataclasses import dataclass
 from sqlalchemy.orm import Session
 from app.core.error import AppError, ErrorCode
-from app.module.blacklist.module import BlacklistModule
 from app.module.account import AccountModule
 from app.core.jwt import create_access_token
 
 
 @dataclass(frozen=True)
 class RefreshInput:
-    jti: str
     sub: str
     token_version: int
 
@@ -23,12 +21,8 @@ class RefreshUsecase:
         self.account_module = AccountModule(db)
 
     def execute(self, input: RefreshInput) -> RefreshResult:
-        if not input.jti or not input.sub or input.token_version is None:
+        if not input.sub or input.token_version is None:
             raise AppError(code=ErrorCode.MALFORMED_TOKEN)
-
-        module = BlacklistModule()
-        if module.is_revoked(input.jti):
-            raise AppError(code=ErrorCode.TOKEN_REVOKED)
 
         try:
             account_id = int(input.sub)

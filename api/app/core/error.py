@@ -29,7 +29,6 @@ class ErrorCode(str, Enum):
     REFRESH_INVALID_PAYLOAD = "REFRESH_INVALID_PAYLOAD"
     REFRESH_INVALID_TYPE = "REFRESH_INVALID_TYPE"
     REFRESH_MISSING = "REFRESH_MISSING"
-    TOKEN_REVOKED = "TOKEN_REVOKED"
 
     # Common
     FORBIDDEN = "FORBIDDEN"
@@ -67,7 +66,6 @@ APP_ERROR_CODE_KINDS: dict[str, AppErrorKind] = {
     ErrorCode.REFRESH_INVALID_PAYLOAD.value: AppErrorKind.UNAUTHORIZED,
     ErrorCode.REFRESH_INVALID_TYPE.value: AppErrorKind.UNAUTHORIZED,
     ErrorCode.REFRESH_MISSING.value: AppErrorKind.UNAUTHORIZED,
-    ErrorCode.TOKEN_REVOKED.value: AppErrorKind.UNAUTHORIZED,
     ErrorCode.FORBIDDEN.value: AppErrorKind.FORBIDDEN,
     ErrorCode.ACCOUNT_NOT_FOUND.value: AppErrorKind.NOT_FOUND,
     ErrorCode.EMAIL_ALREADY_EXISTS.value: AppErrorKind.CONFLICT,

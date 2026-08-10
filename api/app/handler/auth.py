@@ -16,7 +16,6 @@ from app.handler.dto.auth import (
     SignupResponse,
 )
 from app.usecase.auth.login import LoginInput, LoginUsecase
-from app.usecase.auth.logout import LogoutInput, LogoutUsecase
 from app.usecase.auth.refresh import RefreshInput, RefreshUsecase
 from app.usecase.auth.signup import SignupInput, SignupUsecase
 
@@ -85,7 +84,6 @@ def refresh_token(
     usecase = RefreshUsecase(db)
     result = usecase.execute(
         RefreshInput(
-            jti=payload.get("jti"),
             sub=payload.get("sub"),
             token_version=payload.get("token_version"),
         )
@@ -95,11 +93,7 @@ def refresh_token(
 
 
 @router.post("/auth/logout", response_model=LogoutResponse)
-def logout(response: Response, payload: dict = Depends(verify_refresh_token)):
-    usecase = LogoutUsecase()
-    input = LogoutInput(jti=payload.get("jti"), exp=payload.get("exp"))
-    usecase.execute(input)
-
+def logout(response: Response):
     response.delete_cookie(
         key="refresh_token",
         httponly=True,
