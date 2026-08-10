@@ -58,8 +58,13 @@ pydantic==2.13.4
     # via
     #   -r requirements.in
     #   fastapi
+    #   pydantic-settings
 pydantic-core==2.46.4
     # via pydantic
+pydantic-settings==2.15.0
+    # via -r requirements.in
+python-dotenv==1.2.2
+    # via pydantic-settings
 python-jose==3.5.0
     # via -r requirements.in
 rsa==4.9.1
@@ -84,5 +89,6 @@ typing-inspection==0.4.2
     # via
     #   fastapi
     #   pydantic
+    #   pydantic-settings
 uvicorn==0.52.1
     # via -r requirements.in

@@ -7,3 +7,4 @@ psycopg[binary]
 python-jose[cryptography]
 bcrypt
 pydantic[email]
+pydantic-settings

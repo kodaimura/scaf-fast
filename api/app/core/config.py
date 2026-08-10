@@ -1,110 +1,96 @@
-import os
+from typing import Annotated, Literal
 from urllib.parse import urlparse
 
-
-def _get_choice(name: str, default: str, choices: set[str]) -> str:
-    value = os.getenv(name, default).strip().lower()
-    if value not in choices:
-        allowed = ", ".join(sorted(choices))
-        raise ValueError(f"{name} must be one of: {allowed}")
-    return value
+from pydantic import field_validator, model_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
-def _get_bool(name: str, default: bool) -> bool:
-    default_value = "true" if default else "false"
-    value = os.getenv(name, default_value).strip().lower()
-    if value in {"1", "true", "yes", "on"}:
-        return True
-    if value in {"0", "false", "no", "off"}:
-        return False
-    raise ValueError(f"{name} must be a boolean value")
+class Config(BaseSettings):
+    model_config = SettingsConfigDict(
+        case_sensitive=True,
+        env_file=".env",
+        extra="ignore",
+    )
 
-
-def _get_required_production_secret(name: str, app_env: str) -> str:
-    value = os.getenv(name, "randomstring")
-    if app_env == "production" and (
-        value == "randomstring" or value.startswith("change-me")
-    ):
-        raise ValueError(f"{name} must be changed for production")
-    if app_env == "production" and not value.strip():
-        raise ValueError(f"{name} must not be empty for production")
-    return value
-
-
-def _get_frontend_origins(name: str, default: str, app_env: str) -> list[str]:
-    origins = [
-        origin.strip()
-        for origin in os.getenv(name, default).split(",")
-        if origin.strip()
-    ]
-    if app_env == "production":
-        for origin in origins:
-            hostname = urlparse(origin).hostname
-            if origin == "*" or hostname in {"localhost", "127.0.0.1", "::1"}:
-                raise ValueError(f"{name} contains local origin in production")
-    return origins
-
-
-class Config:
     # === アプリ環境設定 ===
-    APP_ENV: str = _get_choice("APP_ENV", "dev", {"dev", "production", "test"})
-    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
-    ENABLE_SIGNUP: bool = _get_bool("ENABLE_SIGNUP", True)
-    AUTH_LOGIN_ID_MODE: str = _get_choice(
-        "AUTH_LOGIN_ID_MODE", "email", {"email", "login_id"}
-    )
-    FRONTEND_ORIGINS: list[str] = _get_frontend_origins(
-        "FRONTEND_ORIGINS",
-        "http://localhost:3000,http://localhost:5173",
-        APP_ENV,
-    )
+    APP_ENV: Literal["dev", "production", "test"] = "dev"
+    LOG_LEVEL: str = "INFO"
+    ENABLE_SIGNUP: bool = True
+    AUTH_LOGIN_ID_MODE: Literal["email", "login_id"] = "email"
+    FRONTEND_ORIGINS: Annotated[list[str], NoDecode] = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+    ]
 
     # === Database設定 ===
-    DATABASE_URL: str = os.getenv(
-        "DATABASE_URL",
-        "postgresql+psycopg://postgres:postgres@db:5432/project_db?sslmode=disable",
+    DATABASE_URL: str = (
+        "postgresql+psycopg://postgres:postgres@db:5432/project_db?sslmode=disable"
     )
 
     # === 認証関連設定 ===
-    ACCESS_TOKEN_SECRET: str = _get_required_production_secret(
-        "ACCESS_TOKEN_SECRET", APP_ENV
-    )
-    ACCESS_TOKEN_EXPIRES_SECONDS: int = int(
-        os.getenv("ACCESS_TOKEN_EXPIRES_SECONDS", 900)
-    )
-    REFRESH_TOKEN_SECRET: str = _get_required_production_secret(
-        "REFRESH_TOKEN_SECRET", APP_ENV
-    )
-    REFRESH_TOKEN_EXPIRES_SECONDS: int = int(
-        os.getenv("REFRESH_TOKEN_EXPIRES_SECONDS", 2592000)
-    )
-    REFRESH_TOKEN_REMEMBER_ME_EXPIRES_SECONDS: int = int(
-        os.getenv("REFRESH_TOKEN_REMEMBER_ME_EXPIRES_SECONDS", 2592000)
-    )
+    ACCESS_TOKEN_SECRET: str = "randomstring"
+    ACCESS_TOKEN_EXPIRES_SECONDS: int = 900
+    REFRESH_TOKEN_SECRET: str = "randomstring"
+    REFRESH_TOKEN_EXPIRES_SECONDS: int = 2592000
+    REFRESH_TOKEN_REMEMBER_ME_EXPIRES_SECONDS: int = 2592000
 
     # === パスワード再設定 ===
-    PASSWORD_RESET_URL_BASE: str = os.getenv(
-        "PASSWORD_RESET_URL_BASE",
-        "http://localhost:3000/reset-password",
-    )
-    PASSWORD_RESET_TOKEN_EXPIRES_MINUTES: int = int(
-        os.getenv("PASSWORD_RESET_TOKEN_EXPIRES_MINUTES", 30)
-    )
-    PASSWORD_RESET_RESEND_INTERVAL_MINUTES: int = int(
-        os.getenv("PASSWORD_RESET_RESEND_INTERVAL_MINUTES", 5)
-    )
+    PASSWORD_RESET_URL_BASE: str = "http://localhost:3000/reset-password"
+    PASSWORD_RESET_TOKEN_EXPIRES_MINUTES: int = 30
+    PASSWORD_RESET_RESEND_INTERVAL_MINUTES: int = 5
 
     # === Mail ===
-    MAIL_PROVIDER: str = _get_choice("MAIL_PROVIDER", "mailhog", {"mailhog", "smtp"})
-    MAIL_FROM: str = os.getenv("MAIL_FROM", "no-reply@example.local")
-    SMTP_HOST: str | None = os.getenv("SMTP_HOST")
-    SMTP_PORT: int = int(os.getenv("SMTP_PORT", 587))
-    SMTP_USERNAME: str | None = os.getenv("SMTP_USERNAME")
-    SMTP_PASSWORD: str | None = os.getenv("SMTP_PASSWORD")
-    SMTP_USE_TLS: bool = _get_bool("SMTP_USE_TLS", True)
+    MAIL_PROVIDER: Literal["mailhog", "smtp"] = "mailhog"
+    MAIL_FROM: str = "no-reply@example.local"
+    SMTP_HOST: str | None = None
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str | None = None
+    SMTP_PASSWORD: str | None = None
+    SMTP_USE_TLS: bool = True
 
-    if MAIL_PROVIDER == "smtp" and not SMTP_HOST:
-        raise ValueError("SMTP_HOST is required when MAIL_PROVIDER=smtp")
+    @field_validator("APP_ENV", "AUTH_LOGIN_ID_MODE", "MAIL_PROVIDER", mode="before")
+    @classmethod
+    def normalize_choices(cls, value: str) -> str:
+        return value.strip().lower() if isinstance(value, str) else value
+
+    @field_validator("FRONTEND_ORIGINS", mode="before")
+    @classmethod
+    def parse_frontend_origins(cls, value: str | list[str]) -> list[str]:
+        if isinstance(value, str):
+            return [origin.strip() for origin in value.split(",") if origin.strip()]
+        return [origin.strip() for origin in value if origin.strip()]
+
+    @field_validator("SMTP_HOST", "SMTP_USERNAME", "SMTP_PASSWORD", mode="before")
+    @classmethod
+    def empty_string_to_none(cls, value: str | None) -> str | None:
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
+
+    @model_validator(mode="after")
+    def validate_production_settings(self):
+        if self.APP_ENV == "production":
+            self._validate_production_secret("ACCESS_TOKEN_SECRET")
+            self._validate_production_secret("REFRESH_TOKEN_SECRET")
+            self._validate_production_frontend_origins()
+
+        if self.MAIL_PROVIDER == "smtp" and not self.SMTP_HOST:
+            raise ValueError("SMTP_HOST is required when MAIL_PROVIDER=smtp")
+
+        return self
+
+    def _validate_production_secret(self, name: str) -> None:
+        value = getattr(self, name)
+        if value == "randomstring" or value.startswith("change-me"):
+            raise ValueError(f"{name} must be changed for production")
+        if not value.strip():
+            raise ValueError(f"{name} must not be empty for production")
+
+    def _validate_production_frontend_origins(self) -> None:
+        for origin in self.FRONTEND_ORIGINS:
+            hostname = urlparse(origin).hostname
+            if origin == "*" or hostname in {"localhost", "127.0.0.1", "::1"}:
+                raise ValueError("FRONTEND_ORIGINS contains local origin in production")
 
 
 config = Config()
