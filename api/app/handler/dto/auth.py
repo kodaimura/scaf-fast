@@ -32,6 +32,7 @@ class AccountResponse(BaseModel):
     login_id: str
     first_name: str
     last_name: str
+    disabled_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 

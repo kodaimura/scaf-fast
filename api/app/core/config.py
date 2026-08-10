@@ -6,6 +6,7 @@ class Config:
     APP_ENV: str = os.getenv("APP_ENV", "dev")
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     USE_BLACKLIST: bool = os.getenv("USE_BLACKLIST", "true").lower() == "true"
+    ENABLE_SIGNUP: bool = os.getenv("ENABLE_SIGNUP", "true").lower() == "true"
     FRONTEND_ORIGINS: list[str] = os.getenv(
         "FRONTEND_ORIGINS", "http://localhost:3000,http://localhost:5173"
     ).split(",")
