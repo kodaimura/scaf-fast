@@ -1,10 +1,9 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
-import hashlib
 
 from sqlalchemy.orm import Session
 
-from app.core.crypto import hash_password
+from app.core.crypto import hash_password, hash_token
 from app.core.error import AppError, ErrorCode
 from app.module.account import AccountModule
 from app.module.password_reset_token import PasswordResetTokenModule
@@ -23,7 +22,7 @@ class ResetPasswordUsecase:
         self.token_module = PasswordResetTokenModule(db)
 
     def execute(self, input: ResetPasswordInput) -> None:
-        token_hash = hashlib.sha256(input.token.encode()).hexdigest()
+        token_hash = hash_token(input.token)
         token = self.token_module.get_by_hash(token_hash)
 
         if not token:

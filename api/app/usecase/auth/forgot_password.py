@@ -1,12 +1,11 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-import hashlib
-import secrets
 from urllib.parse import urlencode
 
 from sqlalchemy.orm import Session
 
 from app.core.config import config
+from app.core.crypto import generate_token, hash_token
 from app.core.mailer import get_mailer
 from app.module.account import AccountModule
 from app.module.password_reset_token import (
@@ -42,8 +41,8 @@ class ForgotPasswordUsecase:
 
         self.token_module.invalidate_active_tokens(account.id)
 
-        raw_token = secrets.token_urlsafe(48)
-        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+        raw_token = generate_token()
+        token_hash = hash_token(raw_token)
         expires_at = now + timedelta(
             minutes=config.PASSWORD_RESET_TOKEN_EXPIRES_MINUTES
         )

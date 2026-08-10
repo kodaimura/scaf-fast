@@ -1,7 +1,6 @@
 import bcrypt
 import hashlib
 import secrets
-from datetime import datetime, timedelta
 
 
 def hash_password(password: str) -> str:
@@ -20,9 +19,5 @@ def hash_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def generate_token() -> str:
-    return secrets.token_urlsafe(64)
-
-
-def generate_expiry(hours: int = 24) -> datetime:
-    return datetime.utcnow() + timedelta(hours=hours)
+def generate_token(byte_length: int = 48) -> str:
+    return secrets.token_urlsafe(byte_length)
