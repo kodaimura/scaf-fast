@@ -21,7 +21,9 @@ def _get_bool(name: str, default: bool) -> bool:
 
 def _get_required_production_secret(name: str, app_env: str) -> str:
     value = os.getenv(name, "randomstring")
-    if app_env == "production" and value == "randomstring":
+    if app_env == "production" and (
+        value == "randomstring" or value.startswith("change-me")
+    ):
         raise ValueError(f"{name} must be changed for production")
     if app_env == "production" and not value.strip():
         raise ValueError(f"{name} must not be empty for production")

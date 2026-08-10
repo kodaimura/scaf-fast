@@ -11,7 +11,6 @@ from app.handler.dto.auth import (
     ForgotPasswordRequest,
     LoginRequest,
     LoginResponse,
-    LogoutResponse,
     RefreshResponse,
     ResetPasswordRequest,
     SignupRequest,
@@ -100,7 +99,7 @@ def refresh_token(
     return ApiResponse.ok(data=data, response=response)
 
 
-@router.post("/auth/logout", response_model=LogoutResponse)
+@router.post("/auth/logout")
 def logout(response: Response):
     response.delete_cookie(
         key="refresh_token",
@@ -110,7 +109,7 @@ def logout(response: Response):
         path="/",
     )
 
-    return ApiResponse.ok(data=LogoutResponse(), response=response)
+    return ApiResponse.ok(data=None, response=response)
 
 
 @router.post("/auth/forgot-password", status_code=204)

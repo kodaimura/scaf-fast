@@ -13,7 +13,4 @@ def resolve_login_id(login_id: str | None, email: str | None) -> str:
             raise AppError(code=ErrorCode.LOGIN_ID_REQUIRED)
         return login_id
 
-    raise AppError(
-        code=ErrorCode.INVALID_AUTH_LOGIN_ID_MODE,
-        details={"mode": config.AUTH_LOGIN_ID_MODE},
-    )
+    raise AppError(code=ErrorCode.INVALID_STATE)
