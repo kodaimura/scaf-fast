@@ -17,7 +17,7 @@ class AccountResponse(BaseModel):
 
 
 class PostAccountRequest(BaseModel):
-    login_id: str
+    login_id: str | None = None
     email: EmailStr | None = None
     first_name: str
     last_name: str
@@ -25,7 +25,7 @@ class PostAccountRequest(BaseModel):
 
 
 class PutAccountRequest(BaseModel):
-    login_id: str
+    login_id: str | None = None
     email: EmailStr | None = None
     first_name: str
     last_name: str

@@ -2,13 +2,14 @@ from dataclasses import dataclass
 from sqlalchemy.orm import Session
 from app.core.crypto import hash_password
 from app.core.error import AppError, ErrorCode
+from app.core.login_identifier import resolve_login_id
 from app.module.account.module import AccountModule, Account
 
 
 @dataclass(frozen=True)
 class UpdateAccountInput:
     account_id: int
-    login_id: str
+    login_id: str | None
     email: str | None
     first_name: str
     last_name: str
@@ -25,7 +26,9 @@ class UpdateAccountUsecase:
         if not account:
             raise AppError(code=ErrorCode.ACCOUNT_NOT_FOUND)
 
-        existing_login_id = self.module.get_by_login_id(input.login_id)
+        login_id = resolve_login_id(input.login_id, input.email)
+
+        existing_login_id = self.module.get_by_login_id(login_id)
         if existing_login_id and existing_login_id.id != account.id:
             raise AppError(code=ErrorCode.LOGIN_ID_ALREADY_EXISTS)
 
@@ -34,7 +37,7 @@ class UpdateAccountUsecase:
             if existing_email and existing_email.id != account.id:
                 raise AppError(code=ErrorCode.EMAIL_ALREADY_EXISTS)
 
-        account.login_id = input.login_id
+        account.login_id = login_id
         account.email = input.email
         account.first_name = input.first_name
         account.last_name = input.last_name

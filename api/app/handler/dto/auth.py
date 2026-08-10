@@ -8,8 +8,8 @@ from pydantic import BaseModel, EmailStr
 
 
 class SignupRequest(BaseModel):
-    login_id: str
-    email: EmailStr
+    login_id: str | None = None
+    email: EmailStr | None = None
     first_name: str
     last_name: str
     password: str

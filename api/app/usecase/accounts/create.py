@@ -2,12 +2,13 @@ from dataclasses import dataclass
 from sqlalchemy.orm import Session
 from app.core.crypto import hash_password
 from app.core.error import AppError, ErrorCode
+from app.core.login_identifier import resolve_login_id
 from app.module.account.module import AccountModule, Account
 
 
 @dataclass(frozen=True)
 class CreateAccountInput:
-    login_id: str
+    login_id: str | None
     email: str | None
     password: str
     first_name: str
@@ -20,7 +21,9 @@ class CreateAccountUsecase:
         self.module = AccountModule(db)
 
     def execute(self, input: CreateAccountInput) -> Account:
-        existing_login_id = self.module.get_by_login_id(input.login_id)
+        login_id = resolve_login_id(input.login_id, input.email)
+
+        existing_login_id = self.module.get_by_login_id(login_id)
         if existing_login_id:
             raise AppError(code=ErrorCode.LOGIN_ID_ALREADY_EXISTS)
 
@@ -31,7 +34,7 @@ class CreateAccountUsecase:
 
         account = self.module.create(
             Account(
-                login_id=input.login_id,
+                login_id=login_id,
                 email=input.email,
                 password_hash=hash_password(input.password),
                 first_name=input.first_name,
