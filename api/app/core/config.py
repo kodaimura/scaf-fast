@@ -30,5 +30,25 @@ class Config:
         os.getenv("REFRESH_TOKEN_REMEMBER_ME_EXPIRES_SECONDS", 2592000)
     )
 
+    # === パスワード再設定 ===
+    PASSWORD_RESET_URL_BASE: str = os.getenv(
+        "PASSWORD_RESET_URL_BASE",
+        "http://localhost:3000/reset-password",
+    )
+    PASSWORD_RESET_TOKEN_EXPIRES_MINUTES: int = int(
+        os.getenv("PASSWORD_RESET_TOKEN_EXPIRES_MINUTES", 30)
+    )
+    PASSWORD_RESET_RESEND_INTERVAL_MINUTES: int = int(
+        os.getenv("PASSWORD_RESET_RESEND_INTERVAL_MINUTES", 5)
+    )
+
+    # === Mail ===
+    MAIL_FROM: str = os.getenv("MAIL_FROM", "no-reply@example.local")
+    SMTP_HOST: str | None = os.getenv("SMTP_HOST")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", 587))
+    SMTP_USERNAME: str | None = os.getenv("SMTP_USERNAME")
+    SMTP_PASSWORD: str | None = os.getenv("SMTP_PASSWORD")
+    SMTP_USE_TLS: bool = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
+
 
 config = Config()

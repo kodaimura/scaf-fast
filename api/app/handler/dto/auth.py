@@ -21,6 +21,15 @@ class LoginRequest(BaseModel):
     remember_me: bool = False
 
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+
 # ==============================
 # Response DTO
 # ==============================

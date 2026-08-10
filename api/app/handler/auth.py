@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session
 
 from app.core.config import config
@@ -8,16 +8,24 @@ from app.core.jwt import verify_refresh_token
 from app.core.response import ApiResponse
 from app.handler.dto.auth import (
     AccountResponse,
+    ForgotPasswordRequest,
     LoginRequest,
     LoginResponse,
     LogoutResponse,
     RefreshResponse,
+    ResetPasswordRequest,
     SignupRequest,
     SignupResponse,
 )
+from app.usecase.auth.forgot_password import ForgotPasswordInput, ForgotPasswordUsecase
 from app.usecase.auth.login import LoginInput, LoginUsecase
 from app.usecase.auth.refresh import RefreshInput, RefreshUsecase
+from app.usecase.auth.reset_password import ResetPasswordInput, ResetPasswordUsecase
 from app.usecase.auth.signup import SignupInput, SignupUsecase
+from app.usecase.auth.verify_reset_password_token import (
+    VerifyResetPasswordTokenInput,
+    VerifyResetPasswordTokenUsecase,
+)
 
 router = APIRouter()
 
@@ -103,3 +111,32 @@ def logout(response: Response):
     )
 
     return ApiResponse.ok(data=LogoutResponse(), response=response)
+
+
+@router.post("/auth/forgot-password", status_code=204)
+def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    usecase = ForgotPasswordUsecase(db)
+    usecase.execute(ForgotPasswordInput(email=request.email))
+    return Response(status_code=204)
+
+
+@router.get("/auth/reset-password/verify", status_code=204)
+def verify_reset_password_token(
+    token: str = Query(...),
+    db: Session = Depends(get_db),
+):
+    usecase = VerifyResetPasswordTokenUsecase(db)
+    usecase.execute(VerifyResetPasswordTokenInput(token=token))
+    return Response(status_code=204)
+
+
+@router.post("/auth/reset-password", status_code=204)
+def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db)):
+    usecase = ResetPasswordUsecase(db)
+    usecase.execute(
+        ResetPasswordInput(
+            token=request.token,
+            new_password=request.new_password,
+        )
+    )
+    return Response(status_code=204)
