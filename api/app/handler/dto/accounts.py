@@ -34,6 +34,11 @@ class PutAccountRequest(BaseModel):
     password: PasswordString | None = None
 
 
+class PutAccountPasswordRequest(BaseModel):
+    old_password: String255
+    new_password: PasswordString
+
+
 class GetAccountsResponse(BaseModel):
     accounts: list[AccountResponse]
 

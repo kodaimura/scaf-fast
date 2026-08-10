@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.error import AppError, ErrorCode
 from app.core.response import ApiResponse
 from app.handler._dependency import get_account_id
 from app.handler.dto.accounts import (
@@ -13,6 +14,7 @@ from app.handler.dto.accounts import (
     PostAccountResponse,
     PutAccountDisableResponse,
     PutAccountEnableResponse,
+    PutAccountPasswordRequest,
     PutAccountRequest,
     PutAccountResponse,
 )
@@ -23,6 +25,10 @@ from app.usecase.accounts.get import GetAccountInput, GetAccountUsecase
 from app.usecase.accounts.get_current import GetCurrentAccountInput, GetCurrentAccountUsecase
 from app.usecase.accounts.list import ListAccountsUsecase
 from app.usecase.accounts.update import UpdateAccountInput, UpdateAccountUsecase
+from app.usecase.accounts.update_password import (
+    UpdatePasswordInput,
+    UpdatePasswordUsecase,
+)
 
 router = APIRouter()
 
@@ -74,6 +80,28 @@ def get_current_account(
     account = usecase.execute(GetCurrentAccountInput(account_id=account_id))
     data = GetCurrentAccountResponse(account=AccountResponse.model_validate(account))
     return ApiResponse.ok(data=data, response=response)
+
+
+@router.put("/accounts/{target_account_id}/password", status_code=204)
+def put_account_password(
+    target_account_id: str,
+    request: PutAccountPasswordRequest,
+    response: Response,
+    account_id: int = Depends(get_account_id),
+    db: Session = Depends(get_db),
+):
+    if target_account_id != "me":
+        raise AppError(code=ErrorCode.INVALID_STATE)
+
+    usecase = UpdatePasswordUsecase(db)
+    usecase.execute(
+        UpdatePasswordInput(
+            account_id=account_id,
+            old_password=request.old_password,
+            new_password=request.new_password,
+        )
+    )
+    return ApiResponse.no_content(response=response)
 
 
 @router.get("/accounts/{target_account_id}", response_model=GetAccountResponse)
