@@ -44,7 +44,7 @@ def signup(request: SignupRequest, response: Response, db: Session = Depends(get
             last_name=request.last_name,
         )
     )
-    data = SignupResponse(account=AccountResponse.from_orm(account))
+    data = SignupResponse(account=AccountResponse.model_validate(account))
     return ApiResponse.created(data=data, response=response)
 
 
@@ -76,7 +76,7 @@ def login(request: LoginRequest, response: Response, db: Session = Depends(get_d
     )
 
     data = LoginResponse(
-        account=AccountResponse.from_orm(result.account),
+        account=AccountResponse.model_validate(result.account),
         access_token=result.access_token,
     )
     return ApiResponse.ok(data=data, response=response)
@@ -99,7 +99,7 @@ def refresh_token(
     return ApiResponse.ok(data=data, response=response)
 
 
-@router.post("/auth/logout")
+@router.post("/auth/logout", status_code=204)
 def logout(response: Response):
     response.delete_cookie(
         key="refresh_token",
@@ -109,28 +109,37 @@ def logout(response: Response):
         path="/",
     )
 
-    return ApiResponse.ok(data=None, response=response)
+    return ApiResponse.no_content(response=response)
 
 
 @router.post("/auth/forgot-password", status_code=204)
-def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
+def forgot_password(
+    request: ForgotPasswordRequest,
+    response: Response,
+    db: Session = Depends(get_db),
+):
     usecase = ForgotPasswordUsecase(db)
     usecase.execute(ForgotPasswordInput(email=request.email))
-    return Response(status_code=204)
+    return ApiResponse.no_content(response=response)
 
 
 @router.get("/auth/reset-password/verify", status_code=204)
 def verify_reset_password_token(
+    response: Response,
     token: str = Query(...),
     db: Session = Depends(get_db),
 ):
     usecase = VerifyResetPasswordTokenUsecase(db)
     usecase.execute(VerifyResetPasswordTokenInput(token=token))
-    return Response(status_code=204)
+    return ApiResponse.no_content(response=response)
 
 
 @router.post("/auth/reset-password", status_code=204)
-def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db)):
+def reset_password(
+    request: ResetPasswordRequest,
+    response: Response,
+    db: Session = Depends(get_db),
+):
     usecase = ResetPasswordUsecase(db)
     usecase.execute(
         ResetPasswordInput(
@@ -138,4 +147,4 @@ def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db))
             new_password=request.new_password,
         )
     )
-    return Response(status_code=204)
+    return ApiResponse.no_content(response=response)

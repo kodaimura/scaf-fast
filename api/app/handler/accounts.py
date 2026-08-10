@@ -37,7 +37,7 @@ def get_accounts(
     usecase = ListAccountsUsecase(db)
     accounts = usecase.execute()
     data = GetAccountsResponse(
-        accounts=[AccountResponse.from_orm(account) for account in accounts]
+        accounts=[AccountResponse.model_validate(account) for account in accounts]
     )
     return ApiResponse.ok(data=data, response=response)
 
@@ -60,7 +60,7 @@ def post_account(
             last_name=request.last_name,
         )
     )
-    data = PostAccountResponse(account=AccountResponse.from_orm(account))
+    data = PostAccountResponse(account=AccountResponse.model_validate(account))
     return ApiResponse.created(data=data, response=response)
 
 
@@ -72,7 +72,7 @@ def get_current_account(
 ):
     usecase = GetCurrentAccountUsecase(db)
     account = usecase.execute(GetCurrentAccountInput(account_id=account_id))
-    data = GetCurrentAccountResponse(account=AccountResponse.from_orm(account))
+    data = GetCurrentAccountResponse(account=AccountResponse.model_validate(account))
     return ApiResponse.ok(data=data, response=response)
 
 
@@ -86,7 +86,7 @@ def get_account(
     _ = account_id
     usecase = GetAccountUsecase(db)
     account = usecase.execute(GetAccountInput(account_id=target_account_id))
-    data = GetAccountResponse(account=AccountResponse.from_orm(account))
+    data = GetAccountResponse(account=AccountResponse.model_validate(account))
     return ApiResponse.ok(data=data, response=response)
 
 
@@ -110,7 +110,7 @@ def put_account(
             password=request.password,
         )
     )
-    data = PutAccountResponse(account=AccountResponse.from_orm(account))
+    data = PutAccountResponse(account=AccountResponse.model_validate(account))
     return ApiResponse.ok(data=data, response=response)
 
 
@@ -127,7 +127,7 @@ def put_account_disable(
     _ = account_id
     usecase = DisableAccountUsecase(db)
     account = usecase.execute(DisableAccountInput(account_id=target_account_id))
-    data = PutAccountDisableResponse(account=AccountResponse.from_orm(account))
+    data = PutAccountDisableResponse(account=AccountResponse.model_validate(account))
     return ApiResponse.ok(data=data, response=response)
 
 
@@ -144,5 +144,5 @@ def put_account_enable(
     _ = account_id
     usecase = EnableAccountUsecase(db)
     account = usecase.execute(EnableAccountInput(account_id=target_account_id))
-    data = PutAccountEnableResponse(account=AccountResponse.from_orm(account))
+    data = PutAccountEnableResponse(account=AccountResponse.model_validate(account))
     return ApiResponse.ok(data=data, response=response)

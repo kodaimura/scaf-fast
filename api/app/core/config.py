@@ -1,4 +1,5 @@
 import os
+from urllib.parse import urlparse
 
 
 def _get_choice(name: str, default: str, choices: set[str]) -> str:
@@ -30,6 +31,20 @@ def _get_required_production_secret(name: str, app_env: str) -> str:
     return value
 
 
+def _get_frontend_origins(name: str, default: str, app_env: str) -> list[str]:
+    origins = [
+        origin.strip()
+        for origin in os.getenv(name, default).split(",")
+        if origin.strip()
+    ]
+    if app_env == "production":
+        for origin in origins:
+            hostname = urlparse(origin).hostname
+            if origin == "*" or hostname in {"localhost", "127.0.0.1", "::1"}:
+                raise ValueError(f"{name} contains local origin in production")
+    return origins
+
+
 class Config:
     # === アプリ環境設定 ===
     APP_ENV: str = _get_choice("APP_ENV", "dev", {"dev", "production", "test"})
@@ -38,9 +53,11 @@ class Config:
     AUTH_LOGIN_ID_MODE: str = _get_choice(
         "AUTH_LOGIN_ID_MODE", "email", {"email", "login_id"}
     )
-    FRONTEND_ORIGINS: list[str] = os.getenv(
-        "FRONTEND_ORIGINS", "http://localhost:3000,http://localhost:5173"
-    ).split(",")
+    FRONTEND_ORIGINS: list[str] = _get_frontend_origins(
+        "FRONTEND_ORIGINS",
+        "http://localhost:3000,http://localhost:5173",
+        APP_ENV,
+    )
 
     # === Database設定 ===
     DATABASE_URL: str = os.getenv(

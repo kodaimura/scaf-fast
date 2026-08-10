@@ -4,6 +4,12 @@ from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 
 
+class NoContentResponse(Response):
+    def __init__(self, response: Optional[Response] = None):
+        headers = dict(response.headers) if response else {}
+        super().__init__(status_code=204, headers=headers)
+
+
 class ApiResponse:
     @staticmethod
     def _build_response(
@@ -53,6 +59,16 @@ class ApiResponse:
             status_code=201,
             response=response,
         )
+
+    # ----------------------------------------
+    # 204 No Content
+    # ----------------------------------------
+    @classmethod
+    def no_content(
+        cls,
+        response: Optional[Response] = None,
+    ) -> NoContentResponse:
+        return NoContentResponse(response=response)
 
     # ----------------------------------------
     # 400 Bad Request
