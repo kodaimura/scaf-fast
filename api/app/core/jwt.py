@@ -1,15 +1,12 @@
-from fastapi import Header, Depends, Cookie, Request
+from fastapi import Header, Cookie
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple
 from uuid import uuid4
 
 from jose import jwt, JWTError
-from sqlalchemy.orm import Session
 
 from app.core.config import config
-from app.core.database import get_db
 from app.core.error import AppError, ErrorCode
-from app.module.account import AccountModule
 
 ALGORITHM = "HS256"
 
@@ -114,32 +111,3 @@ def verify_refresh_token(refresh_token: Optional[str] = Cookie(None)) -> dict:
         raise AppError(code=ErrorCode.REFRESH_INVALID_PAYLOAD)
 
     return payload
-
-
-def get_account_id(
-    request: Request,
-    payload: dict = Depends(verify_access_token),
-    db: Session = Depends(get_db),
-) -> int:
-    sub = payload.get("sub")
-    token_version = payload.get("token_version")
-    if sub is None or token_version is None:
-        raise AppError(code=ErrorCode.AUTH_INVALID_PAYLOAD)
-
-    try:
-        account_id = int(sub)
-    except ValueError:
-        raise AppError(code=ErrorCode.AUTH_INVALID_SUBJECT)
-
-    account = AccountModule(db).get_by_id(account_id)
-    if not account:
-        raise AppError(code=ErrorCode.AUTH_NOT_FOUND)
-
-    if account.disabled_at is not None:
-        raise AppError(code=ErrorCode.ACCOUNT_DISABLED)
-
-    if token_version != account.token_version:
-        raise AppError(code=ErrorCode.AUTH_TOKEN_REVOKED)
-
-    request.state.account_id = account.id
-    return account.id

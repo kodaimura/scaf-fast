@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.response import ApiResponse
+from app.handler._dependency import get_account_id
 from app.handler.dto.accounts import (
     AccountResponse,
     GetAccountResponse,
@@ -29,8 +30,10 @@ router = APIRouter()
 @router.get("/accounts", response_model=GetAccountsResponse)
 def get_accounts(
     response: Response,
+    account_id: int = Depends(get_account_id),
     db: Session = Depends(get_db),
 ):
+    _ = account_id
     usecase = ListAccountsUsecase(db)
     accounts = usecase.execute()
     data = GetAccountsResponse(
@@ -43,8 +46,10 @@ def get_accounts(
 def post_account(
     request: PostAccountRequest,
     response: Response,
+    account_id: int = Depends(get_account_id),
     db: Session = Depends(get_db),
 ):
+    _ = account_id
     usecase = CreateAccountUsecase(db)
     account = usecase.execute(
         CreateAccountInput(
@@ -61,12 +66,11 @@ def post_account(
 
 @router.get("/accounts/me", response_model=GetCurrentAccountResponse)
 def get_current_account(
-    request: Request,
     response: Response,
+    account_id: int = Depends(get_account_id),
     db: Session = Depends(get_db),
 ):
     usecase = GetCurrentAccountUsecase(db)
-    account_id = request.state.account_id
     account = usecase.execute(GetCurrentAccountInput(account_id=account_id))
     data = GetCurrentAccountResponse(account=AccountResponse.from_orm(account))
     return ApiResponse.ok(data=data, response=response)
@@ -76,8 +80,10 @@ def get_current_account(
 def get_account(
     target_account_id: int,
     response: Response,
+    account_id: int = Depends(get_account_id),
     db: Session = Depends(get_db),
 ):
+    _ = account_id
     usecase = GetAccountUsecase(db)
     account = usecase.execute(GetAccountInput(account_id=target_account_id))
     data = GetAccountResponse(account=AccountResponse.from_orm(account))
@@ -89,8 +95,10 @@ def put_account(
     target_account_id: int,
     request: PutAccountRequest,
     response: Response,
+    account_id: int = Depends(get_account_id),
     db: Session = Depends(get_db),
 ):
+    _ = account_id
     usecase = UpdateAccountUsecase(db)
     account = usecase.execute(
         UpdateAccountInput(
@@ -113,8 +121,10 @@ def put_account(
 def put_account_disable(
     target_account_id: int,
     response: Response,
+    account_id: int = Depends(get_account_id),
     db: Session = Depends(get_db),
 ):
+    _ = account_id
     usecase = DisableAccountUsecase(db)
     account = usecase.execute(DisableAccountInput(account_id=target_account_id))
     data = PutAccountDisableResponse(account=AccountResponse.from_orm(account))
@@ -128,8 +138,10 @@ def put_account_disable(
 def put_account_enable(
     target_account_id: int,
     response: Response,
+    account_id: int = Depends(get_account_id),
     db: Session = Depends(get_db),
 ):
+    _ = account_id
     usecase = EnableAccountUsecase(db)
     account = usecase.execute(EnableAccountInput(account_id=target_account_id))
     data = PutAccountEnableResponse(account=AccountResponse.from_orm(account))
