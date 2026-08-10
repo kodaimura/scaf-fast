@@ -2,8 +2,10 @@ DOCKER_COMPOSE := docker compose
 ENV ?= dev
 DOCKER_COMPOSE_FILE := $(if $(filter prod,$(ENV)),-f docker-compose.prod.yml,-f docker-compose.yml)
 DOCKER_COMPOSE_CMD := $(DOCKER_COMPOSE) $(DOCKER_COMPOSE_FILE)
+PYTHON_IMAGE := python:3.13-slim
+API_DIR := $(CURDIR)/api
 
-.PHONY: up build down stop exec logs ps reup migrate downgrade history heads current makemigration help
+.PHONY: up build down stop exec logs ps reup requirements_compile migrate downgrade history heads current makemigration help
 
 ## -----------------------------
 ## Base Commands
@@ -31,6 +33,9 @@ ps:
 	$(DOCKER_COMPOSE_CMD) ps
 
 reup: down up
+
+requirements_compile:
+	docker run --rm -v "$(API_DIR):/app" -w /app $(PYTHON_IMAGE) sh -c "python -m pip install --no-cache-dir pip-tools && pip-compile --strip-extras requirements.in --output-file requirements.txt"
 
 ## -----------------------------
 ## Alembic Migrations
@@ -77,6 +82,8 @@ help:
 	@echo "  logs            Show api logs"
 	@echo "  ps              Show container status"
 	@echo "  reup            Restart environment (down + up)"
+	@echo "  requirements_compile"
+	@echo "                  Compile pinned Python requirements with pip-tools"
 	@echo ""
 	@echo "Migration commands:"
 	@echo "  migrate         Run Alembic upgrade head"
