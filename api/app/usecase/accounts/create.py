@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from sqlalchemy.orm import Session
 from app.core.crypto import hash_password
 from app.core.error import AppError, ErrorCode
-from app.service.login_identifier import resolve_login_id
 from app.module.account.module import AccountModule, Account
+from app.usecase.helper import resolve_login_id
 
 
 @dataclass(frozen=True)
