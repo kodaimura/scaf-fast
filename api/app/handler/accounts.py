@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.error import AppError, ErrorCode
+from app.core.error import AppError, AppErrorKind
 from app.core.response import ApiResponse
 from app.handler._dependency import get_account_id
 from app.handler.dto.accounts import (
@@ -82,17 +82,13 @@ def get_current_account(
     return ApiResponse.ok(data=data, response=response)
 
 
-@router.put("/accounts/{target_account_id}/password", status_code=204)
+@router.put("/accounts/me/password", status_code=204)
 def put_account_password(
-    target_account_id: str,
     request: PutAccountPasswordRequest,
     response: Response,
     account_id: int = Depends(get_account_id),
     db: Session = Depends(get_db),
 ):
-    if target_account_id != "me":
-        raise AppError(code=ErrorCode.INVALID_STATE)
-
     usecase = UpdatePasswordUsecase(db)
     usecase.execute(
         UpdatePasswordInput(
@@ -106,31 +102,33 @@ def put_account_password(
 
 @router.get("/accounts/{target_account_id}", response_model=GetAccountResponse)
 def get_account(
-    target_account_id: int,
+    target_account_id: str,
     response: Response,
     account_id: int = Depends(get_account_id),
     db: Session = Depends(get_db),
 ):
     _ = account_id
+    parsed_account_id = _parse_target_account_id(target_account_id)
     usecase = GetAccountUsecase(db)
-    account = usecase.execute(GetAccountInput(account_id=target_account_id))
+    account = usecase.execute(GetAccountInput(account_id=parsed_account_id))
     data = GetAccountResponse(account=AccountResponse.model_validate(account))
     return ApiResponse.ok(data=data, response=response)
 
 
 @router.put("/accounts/{target_account_id}", response_model=PutAccountResponse)
 def put_account(
-    target_account_id: int,
+    target_account_id: str,
     request: PutAccountRequest,
     response: Response,
     account_id: int = Depends(get_account_id),
     db: Session = Depends(get_db),
 ):
     _ = account_id
+    parsed_account_id = _parse_target_account_id(target_account_id)
     usecase = UpdateAccountUsecase(db)
     account = usecase.execute(
         UpdateAccountInput(
-            account_id=target_account_id,
+            account_id=parsed_account_id,
             login_id=request.login_id,
             email=request.email,
             first_name=request.first_name,
@@ -147,14 +145,15 @@ def put_account(
     response_model=PutAccountDisableResponse,
 )
 def put_account_disable(
-    target_account_id: int,
+    target_account_id: str,
     response: Response,
     account_id: int = Depends(get_account_id),
     db: Session = Depends(get_db),
 ):
     _ = account_id
+    parsed_account_id = _parse_target_account_id(target_account_id)
     usecase = DisableAccountUsecase(db)
-    account = usecase.execute(DisableAccountInput(account_id=target_account_id))
+    account = usecase.execute(DisableAccountInput(account_id=parsed_account_id))
     data = PutAccountDisableResponse(account=AccountResponse.model_validate(account))
     return ApiResponse.ok(data=data, response=response)
 
@@ -164,13 +163,21 @@ def put_account_disable(
     response_model=PutAccountEnableResponse,
 )
 def put_account_enable(
-    target_account_id: int,
+    target_account_id: str,
     response: Response,
     account_id: int = Depends(get_account_id),
     db: Session = Depends(get_db),
 ):
     _ = account_id
+    parsed_account_id = _parse_target_account_id(target_account_id)
     usecase = EnableAccountUsecase(db)
-    account = usecase.execute(EnableAccountInput(account_id=target_account_id))
+    account = usecase.execute(EnableAccountInput(account_id=parsed_account_id))
     data = PutAccountEnableResponse(account=AccountResponse.model_validate(account))
     return ApiResponse.ok(data=data, response=response)
+
+
+def _parse_target_account_id(target_account_id: str) -> int:
+    try:
+        return int(target_account_id)
+    except ValueError:
+        raise AppError(code=AppErrorKind.BAD_REQUEST)
