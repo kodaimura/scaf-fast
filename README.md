@@ -25,6 +25,9 @@ make requirements_compile
 make down_volumes
 ```
 
+Host ports are bound to `127.0.0.1` by default. Set `API_BIND_HOST=0.0.0.0`
+only when the API must be reachable from outside the host.
+
 Use production compose settings with `ENV=prod`.
 
 ```sh
