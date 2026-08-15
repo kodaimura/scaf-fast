@@ -2,11 +2,23 @@
 
 FastAPI backend scaffold.
 
-Rename template identifiers after cloning directly:
+## Create a project
+
+This scaffold supports direct cloning, GitHub's **Use this template**, and
+generation through webscaf.
+
+For a direct clone or a repository created from the GitHub template, clone it
+using the intended project directory and initialize it once:
 
 ```sh
-bin/scaf-init my-app
+git clone <repository-url> my-app
+cd my-app
+make init
 ```
+
+`make init` uses the current directory name. Override it when needed with
+`make init PROJECT_NAME=another-name`. webscaf runs the same initialization
+automatically. Skip initialization only when developing this scaffold itself.
 
 ## Development
 
