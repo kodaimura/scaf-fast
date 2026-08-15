@@ -20,6 +20,7 @@ make logs
 make exec
 make check
 make test
+make test_e2e
 make smoke
 make routes
 make requirements_compile
