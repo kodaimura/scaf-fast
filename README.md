@@ -2,6 +2,12 @@
 
 FastAPI backend scaffold.
 
+Rename template identifiers after cloning directly:
+
+```sh
+bin/scaf-init my-app
+```
+
 ## Development
 
 This template is intended to run through Docker. Local Python and Node are not
