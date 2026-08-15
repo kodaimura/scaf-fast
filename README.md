@@ -36,8 +36,8 @@ only when the API must be reachable from outside the host.
 Use production compose settings with `ENV=prod`.
 
 ```sh
-cp api/.env.example api/.env
-# Edit production secrets and database settings in api/.env.
+cp .env.example .env
+# Edit production secrets and database settings in .env.
 make build ENV=prod
 make migrate ENV=prod
 make up ENV=prod

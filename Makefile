@@ -4,7 +4,7 @@ DOCKER_COMPOSE_FILE := $(if $(filter prod,$(ENV)),-f docker-compose.prod.yml,-f 
 DOCKER_COMPOSE_CMD := $(DOCKER_COMPOSE) $(DOCKER_COMPOSE_FILE)
 E2E_COMPOSE_CMD := $(DOCKER_COMPOSE) -p scaf-fast-e2e -f docker-compose.yml -f docker-compose.test.yml
 PYTHON_IMAGE := python:3.13-slim
-API_DIR := $(CURDIR)/api
+API_DIR := $(CURDIR)
 API_SERVICE := api
 MIGRATE_SERVICE := migrate
 

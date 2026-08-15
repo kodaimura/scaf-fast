@@ -1,11 +1,11 @@
 services:
   api:
     build:
-      context: ./api
+      context: .
     init: true
     restart: always
     env_file:
-      - ./api/.env
+      - ./.env
     command: >
       sh -c "gunicorn app.main:app
       -k uvicorn.workers.UvicornWorker
@@ -27,11 +27,11 @@ services:
 
   migrate:
     build:
-      context: ./api
+      context: .
     profiles:
       - tools
     init: true
     env_file:
-      - ./api/.env
+      - ./.env
     command: alembic upgrade head
     restart: "no"

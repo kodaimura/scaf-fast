@@ -1,4 +1,5 @@
 .git
+.vscode/
 __pycache__/
 *.pyc
 *.pyo
@@ -11,6 +12,9 @@ htmlcov/
 .venv/
 dist/
 build/
+test/
+tests/
+docker-compose*.yml
 *.sqlite3
 *.db
 data/
