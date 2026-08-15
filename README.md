@@ -19,6 +19,7 @@ Useful commands:
 make logs
 make exec
 make check
+make test
 make smoke
 make routes
 make requirements_compile
