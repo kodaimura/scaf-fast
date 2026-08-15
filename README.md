@@ -27,6 +27,9 @@ make requirements_compile
 make down_volumes
 ```
 
+API E2E tests are organized by domain so new endpoints can add coverage at the
+same level. See [`test/e2e/README.md`](test/e2e/README.md).
+
 Host ports are bound to `127.0.0.1` by default. Set `API_BIND_HOST=0.0.0.0`
 only when the API must be reachable from outside the host.
 

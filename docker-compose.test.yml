@@ -11,7 +11,7 @@ services:
       - test
     working_dir: /test
     volumes:
-      - ./test/api.e2e.mjs:/test/api.e2e.mjs:ro
+      - ./test/e2e:/test/e2e:ro
     environment:
       API_ORIGIN: http://api:8000
       MAILHOG_URL: http://mailhog:8025
@@ -20,5 +20,4 @@ services:
         condition: service_healthy
       mailhog:
         condition: service_started
-    command: node /test/api.e2e.mjs
-
+    command: sh -c 'node --test --test-concurrency=1 /test/e2e/*.e2e.mjs'
