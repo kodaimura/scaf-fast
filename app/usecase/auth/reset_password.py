@@ -23,7 +23,7 @@ class ResetPasswordUsecase:
 
     def execute(self, input: ResetPasswordInput) -> None:
         token_hash = hash_token(input.token)
-        token = self.token_module.get_by_hash(token_hash)
+        token = self.token_module.get_by_hash_for_update(token_hash)
 
         if not token:
             raise AppError(code=ErrorCode.TOKEN_INVALID)

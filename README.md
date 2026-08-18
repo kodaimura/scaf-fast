@@ -47,6 +47,7 @@ make test
 make test_e2e
 make audit
 make build_prod
+make smoke_prod
 make smoke
 make routes
 make requirements_compile
@@ -59,6 +60,15 @@ same level. See [`test/e2e/README.md`](test/e2e/README.md).
 Application code follows HUMQ v1.1.0. Read
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) before adding or changing
 Handlers, Usecases, Modules, Queries, business rules, or transaction behavior.
+
+## Authorization
+
+Authentication in this scaffold identifies the caller, but it does not define
+the product's roles, ownership rules, or administrative permissions. Before
+production use, define those rules and enforce authorization in every Usecase,
+especially for account collection routes and routes that accept a target
+account ID. Deny access when no rule explicitly allows it, and add E2E coverage
+for both allowed and denied operations.
 
 Pull requests run the same checks in GitHub Actions. See
 [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) before contributing and report
