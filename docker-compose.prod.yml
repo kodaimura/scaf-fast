@@ -5,6 +5,7 @@ services:
     image: scaf-fast-runtime
     build:
       context: .
+      target: production
     init: true
     restart: always
     env_file:
@@ -32,6 +33,7 @@ services:
     image: scaf-fast-runtime
     build:
       context: .
+      target: production
     profiles:
       - tools
     init: true

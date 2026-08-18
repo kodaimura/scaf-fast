@@ -20,6 +20,9 @@ make init
 `make init PROJECT_NAME=another-name`. webscaf runs the same initialization
 automatically. Skip initialization only when developing this scaffold itself.
 
+After pushing a new repository to GitHub, complete the one-time
+[`docs/GITHUB_SETTINGS.md`](docs/GITHUB_SETTINGS.md) checklist.
+
 ## Development
 
 This template is intended to run through Docker. Local Python and Node are not
@@ -37,8 +40,11 @@ Useful commands:
 make logs
 make exec
 make check
+make lint
 make test
 make test_e2e
+make audit
+make build_prod
 make smoke
 make routes
 make requirements_compile
@@ -47,6 +53,16 @@ make down_volumes
 
 API E2E tests are organized by domain so new endpoints can add coverage at the
 same level. See [`test/e2e/README.md`](test/e2e/README.md).
+
+Application code follows HUMQ v1.1.0. Read
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) before adding or changing
+Handlers, Usecases, Modules, Queries, business rules, or transaction behavior.
+
+Pull requests run the same checks in GitHub Actions. See
+[`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) before contributing and report
+suspected vulnerabilities according to [`docs/SECURITY.md`](docs/SECURITY.md).
+Complete [`docs/RUNBOOK.md`](docs/RUNBOOK.md) when the project's deployment
+process is established, and follow it for releases and production operations.
 
 Host ports are bound to `127.0.0.1` by default. Set `API_BIND_HOST=0.0.0.0`
 only when the API must be reachable from outside the host.
