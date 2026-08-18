@@ -19,3 +19,8 @@
 - Run `make test_e2e` when API behavior or database integration changes.
 - Run `make build_prod` when production dependencies or container configuration changes.
 
+## Operations
+
+- Before changing production configuration, deployment behavior, database migration procedures, health checks, or rollback behavior, read `docs/RUNBOOK.md`.
+- Read `docs/RUNBOOK.md` before assisting with a deployment, release, rollback, recovery, or production incident.
+- Follow the runbook's authorization, verification, and stop conditions. Do not treat an implementation or commit request as deployment authorization.
