@@ -11,7 +11,7 @@ MIGRATE_SERVICE := migrate
 
 .DEFAULT_GOAL := help
 
-.PHONY: init up build build_no_cache down down_volumes stop exec shell logs ps reup check test test_e2e smoke routes requirements_compile migrate downgrade history heads current makemigration help
+.PHONY: init up build build_no_cache build_prod down down_volumes stop exec shell logs ps reup check lint test test_e2e audit smoke routes requirements_compile migrate downgrade history heads current makemigration help
 
 ## -----------------------------
 ## Base Commands
@@ -28,6 +28,9 @@ build:
 
 build_no_cache:
 	$(DOCKER_COMPOSE_CMD) build --no-cache
+
+build_prod:
+	docker build --target production --tag "$(PROJECT_NAME)-runtime" .
 
 down:
 	$(DOCKER_COMPOSE_CMD) down
@@ -52,11 +55,13 @@ ps:
 
 reup: down up
 
-check:
-	$(DOCKER_COMPOSE_CMD) run --rm --no-deps $(API_SERVICE) sh -c "python -m compileall -q app tests && python -m unittest discover -s tests -v"
+check: lint test
+
+lint:
+	$(DOCKER_COMPOSE_CMD) run --rm --no-deps $(API_SERVICE) ruff check app tests
 
 test:
-	$(DOCKER_COMPOSE_CMD) run --rm --no-deps $(API_SERVICE) python -m unittest discover -s tests -v
+	$(DOCKER_COMPOSE_CMD) run --rm --no-deps $(API_SERVICE) sh -c "python -m compileall -q app tests && python -m unittest discover -s tests -v"
 
 test_e2e:
 	@set -eu; \
@@ -66,6 +71,9 @@ test_e2e:
 	$(E2E_COMPOSE_CMD) --profile tools run --rm --build $(MIGRATE_SERVICE); \
 	$(E2E_COMPOSE_CMD) --profile test run --rm --build api-test
 
+audit:
+	$(DOCKER_COMPOSE_CMD) run --rm --no-deps $(API_SERVICE) pip-audit -r requirements.txt
+
 smoke:
 	$(DOCKER_COMPOSE_CMD) exec -T $(API_SERVICE) python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).read().decode())"
 
@@ -73,7 +81,7 @@ routes:
 	$(DOCKER_COMPOSE_CMD) run --rm --no-deps $(API_SERVICE) python -c "from app.main import app; print('\n'.join(sorted(app.openapi().get('paths', {}).keys())))"
 
 requirements_compile:
-	docker run --rm -v "$(API_DIR):/app" -w /app $(PYTHON_IMAGE) sh -c "python -m pip install --no-cache-dir pip-tools && pip-compile --strip-extras requirements.in --output-file requirements.txt"
+	docker run --rm -v "$(API_DIR):/app" -w /app $(PYTHON_IMAGE) sh -c "python -m pip install --no-cache-dir pip-tools && pip-compile --strip-extras requirements.in --output-file requirements.txt && pip-compile --strip-extras requirements-dev.in --output-file requirements-dev.txt"
 
 ## -----------------------------
 ## Alembic Migrations
@@ -121,6 +129,7 @@ help:
 	@echo "  up              Start containers (default: dev)"
 	@echo "  build           Build containers"
 	@echo "  build_no_cache  Build containers without cache"
+	@echo "  build_prod      Build the production API image"
 	@echo "  down            Stop and remove containers and networks"
 	@echo "  down_volumes    Stop and remove containers, networks, and volumes"
 	@echo "  stop            Stop containers only"
@@ -129,9 +138,11 @@ help:
 	@echo "  logs            Show api logs"
 	@echo "  ps              Show container status"
 	@echo "  reup            Restart environment (down + up)"
-	@echo "  check           Compile Python files and run tests"
+	@echo "  check           Run lint and unit tests"
+	@echo "  lint            Run Ruff against application and unit test code"
 	@echo "  test            Run unit tests inside the api container"
 	@echo "  test_e2e        Run the full HTTP API contract in isolation"
+	@echo "  audit           Audit runtime dependencies for known vulnerabilities"
 	@echo "  smoke           Call /health from the running api container"
 	@echo "  routes          Print FastAPI route paths from the api container"
 	@echo "  requirements_compile"

@@ -14,8 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Test
+  quality:
+    name: Quality
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -28,8 +28,30 @@ jobs:
           docker compose -f docker-compose.yml config --quiet
           docker compose -f docker-compose.prod.yml config --quiet
 
-      - name: Run checks
+      - name: Run quality checks
         run: make check
+
+  e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
 
       - name: Run API contract tests
         run: make test_e2e
+
+  build:
+    name: Build
+    needs:
+      - quality
+      - e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build production image
+        run: make build_prod

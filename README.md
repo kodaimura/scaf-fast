@@ -40,8 +40,11 @@ Useful commands:
 make logs
 make exec
 make check
+make lint
 make test
 make test_e2e
+make audit
+make build_prod
 make smoke
 make routes
 make requirements_compile

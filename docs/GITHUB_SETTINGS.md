@@ -19,7 +19,8 @@ Open **Settings > Rules > Rulesets**, create a branch ruleset targeting `main`,
 and enable these rules:
 
 - Require a pull request before merging.
-- Require the `Test` check from the `CI` workflow to pass.
+- Require the `Quality`, `E2E`, and `Build` checks from the `CI` workflow to
+  pass.
 - Require conversation resolution before merging.
 - Restrict branch deletion.
 - Block force pushes.
@@ -27,3 +28,14 @@ and enable these rules:
 Use zero required approvals for solo development. Require at least one approval
 when other developers can merge changes. Set the ruleset to **Active** after
 reviewing its target and bypass permissions.
+
+## Dependency alerts
+
+Enable **Dependabot alerts** under the personal account's **Settings > Advanced
+Security**. Enable them for existing repositories and automatically for new
+repositories when the same policy should apply across the account.
+
+Use alerts to review and prioritize vulnerable dependencies without failing
+unrelated pull requests. Leave automatic Dependabot security updates disabled
+unless the project has decided to accept automatically generated update pull
+requests.

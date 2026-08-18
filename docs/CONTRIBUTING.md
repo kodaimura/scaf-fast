@@ -10,7 +10,12 @@ Run the same checks used by CI:
 ```sh
 make check
 make test_e2e
+make build_prod
 ```
+
+Run `make audit` when runtime dependencies change and before a release. An audit
+finding is reviewed according to its exploitability, available fixes, and
+upgrade cost; it does not automatically block unrelated pull requests.
 
 When behavior changes, add or update tests at the same level as the change.
 Update `.env.example` and the documentation when configuration changes. Include
