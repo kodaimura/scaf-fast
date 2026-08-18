@@ -48,6 +48,10 @@ make down_volumes
 API E2E tests are organized by domain so new endpoints can add coverage at the
 same level. See [`test/e2e/README.md`](test/e2e/README.md).
 
+Pull requests run the same checks in GitHub Actions. See
+[`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) before contributing and report
+suspected vulnerabilities according to [`docs/SECURITY.md`](docs/SECURITY.md).
+
 Host ports are bound to `127.0.0.1` by default. Set `API_BIND_HOST=0.0.0.0`
 only when the API must be reachable from outside the host.
 
