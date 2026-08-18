@@ -23,7 +23,7 @@
 
 - Run `make check` for lint and unit tests.
 - Run `make test_e2e` when API behavior or database integration changes.
-- Run `make build_prod` when production dependencies or container configuration changes.
+- Run `make smoke_prod` when production dependencies or container configuration changes.
 
 ## Operations
 

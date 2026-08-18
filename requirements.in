@@ -1,5 +1,6 @@
 fastapi
 uvicorn
+uvicorn-worker
 gunicorn
 alembic
 sqlalchemy

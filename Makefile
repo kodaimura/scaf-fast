@@ -11,7 +11,7 @@ MIGRATE_SERVICE := migrate
 
 .DEFAULT_GOAL := help
 
-.PHONY: init up build build_no_cache build_prod down down_volumes stop exec shell logs ps reup check lint test test_e2e audit smoke routes requirements_compile migrate downgrade history heads current makemigration help
+.PHONY: init up build build_no_cache build_prod smoke_prod down down_volumes stop exec shell logs ps reup check lint format format_check test test_e2e audit smoke routes requirements_compile migrate downgrade history heads current makemigration help
 
 ## -----------------------------
 ## Base Commands
@@ -31,6 +31,29 @@ build_no_cache:
 
 build_prod:
 	docker build --target production --tag "$(PROJECT_NAME)-runtime" .
+
+smoke_prod: build_prod
+	@set -eu; \
+	if [ "$$(docker run --rm --entrypoint id "$(PROJECT_NAME)-runtime" -u)" = "0" ]; then \
+		echo "ERROR: production container is running as root"; \
+		exit 1; \
+	fi; \
+	container_id="$$(docker run -d \
+		-e APP_ENV=production \
+		-e FRONTEND_ORIGINS=https://example.com \
+		"$(PROJECT_NAME)-runtime")"; \
+	cleanup() { docker rm -f "$$container_id" >/dev/null 2>&1 || true; }; \
+	trap cleanup EXIT INT TERM; \
+	attempt=0; \
+	until docker exec "$$container_id" python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).read()" >/dev/null 2>&1; do \
+		attempt=$$((attempt + 1)); \
+		if [ "$$attempt" -ge 30 ]; then \
+			docker logs "$$container_id"; \
+			exit 1; \
+		fi; \
+		sleep 1; \
+	done; \
+	echo "Production container is non-root and healthy."
 
 down:
 	$(DOCKER_COMPOSE_CMD) down
@@ -55,10 +78,16 @@ ps:
 
 reup: down up
 
-check: lint test
+check: lint format_check test
 
 lint:
 	$(DOCKER_COMPOSE_CMD) run --rm --no-deps $(API_SERVICE) ruff check app tests
+
+format:
+	$(DOCKER_COMPOSE_CMD) run --rm --no-deps $(API_SERVICE) ruff format app tests
+
+format_check:
+	$(DOCKER_COMPOSE_CMD) run --rm --no-deps $(API_SERVICE) ruff format --check app tests
 
 test:
 	$(DOCKER_COMPOSE_CMD) run --rm --no-deps $(API_SERVICE) sh -c "python -m compileall -q app tests && python -m unittest discover -s tests -v"
@@ -130,6 +159,7 @@ help:
 	@echo "  build           Build containers"
 	@echo "  build_no_cache  Build containers without cache"
 	@echo "  build_prod      Build the production API image"
+	@echo "  smoke_prod      Build and verify the non-root production API image"
 	@echo "  down            Stop and remove containers and networks"
 	@echo "  down_volumes    Stop and remove containers, networks, and volumes"
 	@echo "  stop            Stop containers only"
@@ -138,8 +168,10 @@ help:
 	@echo "  logs            Show api logs"
 	@echo "  ps              Show container status"
 	@echo "  reup            Restart environment (down + up)"
-	@echo "  check           Run lint and unit tests"
+	@echo "  check           Run lint, format checks, and unit tests"
 	@echo "  lint            Run Ruff against application and unit test code"
+	@echo "  format          Format application and unit test code with Ruff"
+	@echo "  format_check    Check Ruff formatting without changing files"
 	@echo "  test            Run unit tests inside the api container"
 	@echo "  test_e2e        Run the full HTTP API contract in isolation"
 	@echo "  audit           Audit runtime dependencies for known vulnerabilities"

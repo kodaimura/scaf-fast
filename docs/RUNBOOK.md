@@ -46,7 +46,7 @@ Document references and command names, but never credentials or secret values.
    ```sh
    make check
    make test_e2e
-   make build_prod
+   make smoke_prod
    ```
 
 4. Run `make audit` when runtime dependencies changed or the deployment is a
@@ -118,4 +118,3 @@ Record enough information to reproduce and review the event:
 - User impact and known data impact
 - Mitigation, rollback, or recovery performed
 - Follow-up changes or documentation updates
-
