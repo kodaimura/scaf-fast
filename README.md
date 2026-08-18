@@ -41,6 +41,8 @@ make logs
 make exec
 make check
 make lint
+make format
+make format_check
 make test
 make test_e2e
 make audit

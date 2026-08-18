@@ -11,7 +11,7 @@ MIGRATE_SERVICE := migrate
 
 .DEFAULT_GOAL := help
 
-.PHONY: init up build build_no_cache build_prod down down_volumes stop exec shell logs ps reup check lint test test_e2e audit smoke routes requirements_compile migrate downgrade history heads current makemigration help
+.PHONY: init up build build_no_cache build_prod down down_volumes stop exec shell logs ps reup check lint format format_check test test_e2e audit smoke routes requirements_compile migrate downgrade history heads current makemigration help
 
 ## -----------------------------
 ## Base Commands
@@ -55,10 +55,16 @@ ps:
 
 reup: down up
 
-check: lint test
+check: lint format_check test
 
 lint:
 	$(DOCKER_COMPOSE_CMD) run --rm --no-deps $(API_SERVICE) ruff check app tests
+
+format:
+	$(DOCKER_COMPOSE_CMD) run --rm --no-deps $(API_SERVICE) ruff format app tests
+
+format_check:
+	$(DOCKER_COMPOSE_CMD) run --rm --no-deps $(API_SERVICE) ruff format --check app tests
 
 test:
 	$(DOCKER_COMPOSE_CMD) run --rm --no-deps $(API_SERVICE) sh -c "python -m compileall -q app tests && python -m unittest discover -s tests -v"
@@ -138,8 +144,10 @@ help:
 	@echo "  logs            Show api logs"
 	@echo "  ps              Show container status"
 	@echo "  reup            Restart environment (down + up)"
-	@echo "  check           Run lint and unit tests"
+	@echo "  check           Run lint, format checks, and unit tests"
 	@echo "  lint            Run Ruff against application and unit test code"
+	@echo "  format          Format application and unit test code with Ruff"
+	@echo "  format_check    Check Ruff formatting without changing files"
 	@echo "  test            Run unit tests inside the api container"
 	@echo "  test_e2e        Run the full HTTP API contract in isolation"
 	@echo "  audit           Audit runtime dependencies for known vulnerabilities"
