@@ -20,6 +20,9 @@ make init
 `make init PROJECT_NAME=another-name`. webscaf runs the same initialization
 automatically. Skip initialization only when developing this scaffold itself.
 
+After pushing a new repository to GitHub, complete the one-time
+[`docs/GITHUB_SETTINGS.md`](docs/GITHUB_SETTINGS.md) checklist.
+
 ## Development
 
 This template is intended to run through Docker. Local Python and Node are not
