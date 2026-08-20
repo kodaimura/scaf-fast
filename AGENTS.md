@@ -8,7 +8,7 @@
 
 ## Architecture
 
-- This project follows HUMQ v1.1.0 as reviewed at upstream commit `d3c9150`.
+- This project follows HUMQ v1.1.0.
 - Before designing, reviewing, or changing application code under `app/`, read and follow `docs/ARCHITECTURE.md`.
 - Treat `docs/ARCHITECTURE.md` as the local source of truth for responsibility boundaries, dependency direction, code placement, transactions, and architecture tests.
 - When a requested change intentionally alters or departs from the architecture, update the implementation and `docs/ARCHITECTURE.md` together and make the exception explicit.

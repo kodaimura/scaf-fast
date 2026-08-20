@@ -3,8 +3,7 @@
 ## Status and source
 
 This project adopts [HUMQ](https://github.com/kodaimura/humq) v1.1.0 for
-application-layer responsibility boundaries, reviewed against upstream commit
-[`d3c9150`](https://github.com/kodaimura/humq/commit/d3c9150a2b824e6197fbc87230a1dc6940631313).
+application-layer responsibility boundaries.
 
 This document is the local implementation contract for this repository. HUMQ
 provides the complete rationale and design background; this document fixes the
@@ -372,9 +371,9 @@ domain instead of accumulating undocumented precedent.
 
 ## Upstream references
 
-- [Reviewed HUMQ revision](https://github.com/kodaimura/humq/tree/d3c9150a2b824e6197fbc87230a1dc6940631313)
-- [Layer and responsibility rules](https://github.com/kodaimura/humq/blob/d3c9150a2b824e6197fbc87230a1dc6940631313/docs/02-layer-rules.md)
-- [Design principles](https://github.com/kodaimura/humq/blob/d3c9150a2b824e6197fbc87230a1dc6940631313/docs/03-design-principles.md)
-- [Consistency and transactions](https://github.com/kodaimura/humq/blob/d3c9150a2b824e6197fbc87230a1dc6940631313/docs/04-consistency-and-transactions.md)
-- [FastAPI example](https://github.com/kodaimura/humq/blob/d3c9150a2b824e6197fbc87230a1dc6940631313/docs/06-fastapi-example.md)
-- [Adoption limits and evolution](https://github.com/kodaimura/humq/blob/d3c9150a2b824e6197fbc87230a1dc6940631313/docs/07-adoption-limits-and-evolution.md)
+- [HUMQ v1.1.0 repository](https://github.com/kodaimura/humq)
+- [Layer and responsibility rules](https://github.com/kodaimura/humq/blob/main/docs/02-layer-rules.md)
+- [Design principles](https://github.com/kodaimura/humq/blob/main/docs/03-design-principles.md)
+- [Consistency and transactions](https://github.com/kodaimura/humq/blob/main/docs/04-consistency-and-transactions.md)
+- [FastAPI example](https://github.com/kodaimura/humq/blob/main/docs/06-fastapi-example.md)
+- [Adoption limits and evolution](https://github.com/kodaimura/humq/blob/main/docs/07-adoption-limits-and-evolution.md)
