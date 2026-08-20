@@ -159,9 +159,10 @@ Internal Policy files start with `_` and are not re-exported from package
 
 ## Operation
 
-Operation is a database-dependent internal process that multiple Usecases share
-with the same business meaning and change reason. It is not an additional HUMQ
-layer and must not replace the visible Usecase flow.
+Operation is an exceptional database-dependent internal process for preserving
+the same invariant across multiple Usecases when divergent implementations
+would cause a concrete inconsistency. It is not an additional HUMQ layer and
+must not replace the visible Usecase flow.
 
 Operation may:
 
@@ -179,9 +180,11 @@ Operation must:
 - Avoid `begin`, `commit`, and `rollback`.
 - Avoid calling external clients or another Operation.
 
-Create an Operation only after the behavior is used by multiple Usecases and
-must share the same validation, errors, locks, and update order. Similar code or
-a long Usecase alone is not sufficient reason.
+Create an Operation only after multiple Usecases must preserve the same
+invariant and cannot safely allow their validation, errors, locks, or update
+order to diverge. The invariant and the concrete inconsistency caused by
+divergence must be explainable. Reuse, similar code, or a long Usecase alone is
+not sufficient reason.
 
 Start with `app/usecase/<domain>/_operations.py`. If it becomes difficult to
 read, split by owned business capability, for example
@@ -273,6 +276,18 @@ The Handler-called Usecase owns each application transaction boundary. Module
 and Operation may flush work but do not decide whether the business transaction
 succeeds. Query is read-only and owns no transaction boundary.
 
+`SessionLocal` uses `expire_on_commit=False` so ORM objects returned by a
+committed Usecase remain loaded while the Handler maps them to response DTOs.
+This avoids an implicit post-commit SELECT from the Handler boundary. Explicitly
+refresh an entity when a flow needs database-generated or concurrently updated
+state after its last flush.
+
+HUMQ does not structurally guarantee multi-table consistency. A Usecase can
+still omit a required Module call or business rule while respecting every
+dependency boundary. Use database constraints and Usecase rollback tests to
+reduce that risk. When a domain cannot accept implementation-level protection,
+use an aggregate-centered or otherwise structurally protective design there.
+
 Apply these rules:
 
 - Group changes that must succeed or fail together in the same transaction.
@@ -305,8 +320,8 @@ Use this order when adding behavior:
 2. Business sequence, branch, authorization, or transaction: Usecase.
 3. Pure decision or calculation: local Usecase function, then Policy only when
    genuinely shared.
-4. Shared database-dependent internal behavior: Operation only when the reuse
-   criteria are met.
+4. Shared database-dependent internal behavior: Operation only when the same
+   invariant and concrete inconsistency criteria are met.
 5. Basic read or any write for one table: that table's Module.
 6. Cross-table or use-specific complex read: Query.
 7. External protocol and data-format details: external client.
@@ -339,8 +354,9 @@ end-to-end flow changes.
 ## Evolution and exceptions
 
 Prefer traceability over reuse. Do not move business steps out of Usecase merely
-to shorten it. Review the design when Operations lose a clear owning domain,
-call one another, become generic Services, or hide most of the main flow.
+to shorten it. Operation is an exception, not the normal growth path. Review
+the design when Operations multiply, lose a clear owning domain, call one
+another, become generic Services, or hide most of the main flow.
 
 If a domain's shared invariants become too complex for these boundaries, that
 domain may deliberately adopt an aggregate-centered or other architecture while
