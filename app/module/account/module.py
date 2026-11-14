@@ -38,6 +38,29 @@ class AccountModule:
         self.db.flush()
         return entity
 
+    def update_profile(
+        self,
+        entity: Account,
+        *,
+        login_id: str,
+        email: str | None,
+        first_name: str,
+        last_name: str,
+        password_hash: str | None = None,
+    ) -> Account:
+        entity.login_id = login_id
+        entity.email = email
+        entity.first_name = first_name
+        entity.last_name = last_name
+        if password_hash is not None:
+            return self.change_password(entity, password_hash)
+        return self.update(entity)
+
+    def change_password(self, entity: Account, password_hash: str) -> Account:
+        entity.password_hash = password_hash
+        entity.token_version += 1
+        return self.update(entity)
+
     def disable(self, entity: Account) -> Account:
         entity.disabled_at = datetime.now(timezone.utc)
         entity.token_version += 1

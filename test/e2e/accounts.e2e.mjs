@@ -48,6 +48,23 @@ test("account endpoints provide authenticated CRUD operations", async () => {
     404,
     "missing account",
   );
+  const { password: secondaryPassword, ...profile } = secondary;
+  const secondarySession = await login(client, profile.login_id, secondaryPassword);
+  const secondaryAccessToken = secondarySession.json.access_token;
+  expectStatus(
+    await client.put(
+      `/api/accounts/${secondaryId}`,
+      { ...profile, first_name: "Profile only" },
+      { token: accessToken },
+    ),
+    200,
+    "update profile without a password",
+  );
+  expectStatus(
+    await client.get("/api/accounts/me", { token: secondaryAccessToken }),
+    200,
+    "keep access token valid after a profile-only update",
+  );
   const updated = expectStatus(
     await client.put(
       `/api/accounts/${secondaryId}`,
@@ -68,6 +85,11 @@ test("account endpoints provide authenticated CRUD operations", async () => {
     "get updated account",
   );
   assert.equal(persisted.json?.account?.first_name, "Updated");
+  expectStatus(
+    await client.get("/api/accounts/me", { token: secondaryAccessToken }),
+    401,
+    "revoke previous access token after a password update",
+  );
   await login(client, secondary.login_id, passwords.secondaryChanged);
 });
 

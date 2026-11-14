@@ -2,7 +2,7 @@
 
 ## Status and source
 
-This project adopts [HUMQ](https://github.com/kodaimura/humq) v1.1.0 for
+This project adopts [HUMQ v1.2.0](https://github.com/kodaimura/humq/tree/v1.2.0) for
 application-layer responsibility boundaries.
 
 This document is the local implementation contract for this repository. HUMQ
@@ -20,8 +20,8 @@ HUMQ determines where code belongs in request-driven business processing:
 - Module owns reads and writes for one table by default.
 - Query owns read-only, use-specific reads that cross tables.
 
-Policy and Operation are internal ways to share limited logic without hiding
-the main business flow. External clients isolate communication details.
+Usecase may delegate business decisions and consistency processing to named
+internal files. External clients isolate communication details.
 
 HUMQ does not prescribe the placement of configuration, database setup,
 logging, migrations, framework bootstrap, or other infrastructure. In this
@@ -43,21 +43,20 @@ Caller
        -> Usecase
             -> Module -> ORM / database
             -> Query  -> ORM / database
-            -> Policy
-            -> Operation -> Module / Query / Policy
+            -> Internal business processing -> Module / Query
             -> External client -> external system
 ```
 
 Apply these rules:
 
-- Handler calls Usecase. It does not call Module, Query, Operation, or an
-  external client directly.
-- Usecase may call Module, Query, Policy, Operation, and external clients.
+- Handler calls public Usecase. It does not call Module, Query, Usecase
+  internals, or external clients directly.
+- Usecase may call Module, Query, named internal business processing, and
+  external clients.
 - Usecase may pass a SQLAlchemy `Session` and ORM models, but it does not issue
-  ORM queries or persist ORM state directly.
-- Policy depends only on the values needed for its calculation or decision.
-- Operation may call Module, Query, and Policy using the caller's session. It
-  does not call another Operation or own a transaction boundary.
+  ORM queries or modify and persist ORM state directly.
+- Internal business processing may read through Module or Query and write
+  through Module using the calling Usecase's session.
 - Module does not call another Module, Query, Usecase, Handler, or external
   client.
 - Query reads through the ORM or SQL directly. It does not call Module and does
@@ -91,7 +90,7 @@ Handler must not:
 
 - Contain business conditions, authorization decisions, or state transitions.
 - Query or mutate ORM models.
-- Call Module, Query, Operation, or external clients directly.
+- Call Module, Query, Usecase internals, or external clients directly.
 - Start, commit, or roll back a transaction.
 - Perform joins, aggregation, or other persistence work.
 
@@ -118,79 +117,42 @@ Usecase must not:
 
 - Depend on FastAPI request or response objects.
 - Execute ORM queries or SQL directly.
-- Persist an ORM model directly with `add`, `delete`, `flush`, or similar
-  session operations.
+- Change mapped attributes on persistent ORM models or persist a model
+  directly with `add`, `delete`, `flush`, or similar session operations.
 - Hide the main flow in generic services or chains of helpers.
 - Call another public Usecase as a reuse mechanism.
 - Combine unrelated business actions merely to reduce file count.
 
-The main sequence, significant branches, state changes, external I/O, and
-transaction outcome must remain readable from the Usecase. A Usecase may be
-long when the business flow is inherently complex. Split it because it contains
-an independently explainable action, not only because of line count.
+The purpose, main sequence, significant branches, transaction boundaries,
+external I/O, and failure policy must remain readable from the Usecase. A Usecase
+may be long when the business flow is inherently complex. Split it when it
+contains an independently explainable action.
 
 A separate Usecase is appropriate when the behavior has its own trigger,
 authorization decision, success or failure outcome, transaction boundary,
 retry or compensation unit, or independently explainable business purpose.
 
-## Policy
+## Internal business processing
 
-Policy is a deterministic business decision or calculation that does not use
-the database or an external system. Prefer a function unless a class provides a
-clear benefit.
+Small decisions can stay in the Usecase. A decision, calculation, or consistency
+process may move to a named internal file when it has a business purpose worth
+explaining, verifying, or changing independently, even with a single caller.
+Keep the reason for calling it and the primary branch on its result visible
+in the Usecase. Make its validation, locking, and state changes traceable in
+the referenced file.
 
-Policy must:
+Start in the owning domain's `app/usecase/<domain>/` directory. Use
+`_policies.py` as a starting filename for extracted business rules or pick a
+name that identifies the responsibility, such as `_login_id.py`. A rule under
+`_policies.py` can use the database. For rules used across domains, prefer an
+obvious business owner or use a cohesive shared package. Mark internal files
+with a leading `_` and keep them out of public package re-exports. Choose a
+function or class according to the processing it represents.
 
-- Receive all values required for its decision.
-- Return the same result for the same input.
-- Avoid `Session`, Module, Query, Operation, external clients, and mutable
-  process state.
-- Leave its invocation and the resulting major branch visible in the Usecase.
-
-Place a Policy by the narrowest real scope:
-
-1. Keep logic used by one Usecase in that Usecase file.
-2. Put logic shared in one domain in `app/usecase/<domain>/_policies.py`.
-3. Put only truly domain-independent business calculations in
-   `app/usecase/_policies.py`.
-
-Internal Policy files start with `_` and are not re-exported from package
-`__init__.py` files.
-
-## Operation
-
-Operation is an exceptional database-dependent internal process for preserving
-the same invariant across multiple Usecases when divergent implementations
-would cause a concrete inconsistency. It is not an additional HUMQ layer and
-must not replace the visible Usecase flow.
-
-Operation may:
-
-- Use the caller's SQLAlchemy session.
-- Call Module, Query, and Policy.
-- Perform shared validation, authorization, numbering, locking, duplicate
-  detection, and limited multi-table coordination.
-- Call `flush` when required by its work.
-
-Operation must:
-
-- Be called only from Usecase.
-- Write each table through its owning Module.
-- Leave the main call and the branch based on its result visible in Usecase.
-- Avoid `begin`, `commit`, and `rollback`.
-- Avoid calling external clients or another Operation.
-
-Create an Operation only after multiple Usecases must preserve the same
-invariant and cannot safely allow their validation, errors, locks, or update
-order to diverge. The invariant and the concrete inconsistency caused by
-divergence must be explainable. Reuse, similar code, or a long Usecase alone is
-not sufficient reason.
-
-Start with `app/usecase/<domain>/_operations.py`. If it becomes difficult to
-read, split by owned business capability, for example
-`_authorization_operations.py`. Do not create root-level generic Operations,
-an `operations/` layer, or names such as `_common_operations.py` and
-`_database_operations.py`. Internal Operation files are not re-exported.
+Pure decisions and calculations take their required values as inputs. Internal
+processing that needs database access uses Module or Query for reads and the
+owning Module for writes. It uses the calling Usecase's Session. The Usecase
+owns `begin`, `commit`, `rollback`, external-system calls, and failure policy.
 
 ## Module
 
@@ -202,7 +164,8 @@ Module owns:
 - Create, update, and delete operations for its table.
 - Primary-key lookup, existence checks, standard lists, and basic reusable
   searches for its table.
-- Constraints and state changes determined only by that table's values.
+- Constraints and state changes that protect the table's state or updates.
+  Decisions about when to perform those updates belong in Usecase.
 - Conditional updates, row locks, or optimistic locking for concurrent writes.
 - ORM and SQL implementation details.
 
@@ -212,7 +175,8 @@ Module rules:
 - Do not call another Module.
 - Do not contain Usecase-specific business flow.
 - Do not call an external system.
-- Do not call `commit` or `rollback`; `flush` is allowed.
+- `flush` is allowed. The calling Usecase owns `commit` and `rollback`.
+- Keep writes from ORM cascades, hooks, and callbacks within the same table.
 - Prefer database constraints for rules expressible with `UNIQUE`, `NOT NULL`,
   `CHECK`, and foreign keys.
 
@@ -220,7 +184,8 @@ A write to the owned table may read another table when that read is required to
 construct or condition the write. It must not modify the other table or expand
 the Module into a general cross-table reader.
 
-Express multi-table writes by having a Usecase call the relevant Modules. If an
+Express multi-table writes through the owning Modules, called by the Usecase
+directly or through named internal processing in the same transaction. If an
 unavoidable single statement or stored procedure writes multiple tables, treat
 it as an explicit architecture exception: record the tables and reason in a
 project-specific decision record and cover the behavior with integration tests.
@@ -273,8 +238,8 @@ When integrations grow, move them to a clearly named `app/client/` or
 ## Transactions and consistency
 
 The Handler-called Usecase owns each application transaction boundary. Module
-and Operation may flush work but do not decide whether the business transaction
-succeeds. Query is read-only and owns no transaction boundary.
+may flush work. Query is read-only, and any database-using internal processing
+participates in the Usecase's transaction.
 
 `SessionLocal` uses `expire_on_commit=False` so ORM objects returned by a
 committed Usecase remain loaded while the Handler maps them to response DTOs.
@@ -316,16 +281,14 @@ Database transactions cannot make external I/O atomic:
 
 Use this order when adding behavior:
 
-1. External input or output shape, routing, or protocol mapping: Handler.
-2. Business sequence, branch, authorization, or transaction: Usecase.
-3. Pure decision or calculation: local Usecase function, then Policy only when
-   genuinely shared.
-4. Shared database-dependent internal behavior: Operation only when the same
-   invariant and concrete inconsistency criteria are met.
-5. Basic read or any write for one table: that table's Module.
-6. Cross-table or use-specific complex read: Query.
-7. External protocol and data-format details: external client.
-8. Framework bootstrap or technical infrastructure: a clearly named
+1. External input or output shape, routing, or protocol mapping → Handler.
+2. Business sequence, branch, authorization, or transaction → Usecase.
+3. Business decision, calculation, or consistency processing → Usecase, with
+   optional extraction into a named internal file when independently meaningful.
+4. Basic read or any write for one table → that table's Module.
+5. Cross-table or use-specific complex read → Query.
+6. External protocol and data-format details → external client.
+7. Framework bootstrap or technical infrastructure → a clearly named
    infrastructure location such as `core`, never a hidden business layer.
 
 If code does not fit, reconsider the responsibility before adding a new generic
@@ -337,9 +300,9 @@ Tests protect both behavior and responsibility boundaries:
 
 - Test Usecase business branches, authorization, state changes, external-I/O
   decisions, transaction success, and rollback.
-- Test Policy as pure input/output behavior.
-- Test Operation success, failure, and caller-owned rollback using the same
-  session and realistic Module or Query behavior.
+- Test pure decisions with inputs and expected outputs.
+- Test database-using internal processing for consistency and failure with a
+  real database, including rollback by the calling Usecase.
 - Test Module and Query SQL, constraints, joins, locking, and transaction
   behavior against a real database when those details matter.
 - Test Handler request validation, authentication context, status codes,
@@ -353,10 +316,9 @@ end-to-end flow changes.
 
 ## Evolution and exceptions
 
-Prefer traceability over reuse. Do not move business steps out of Usecase merely
-to shorten it. Operation is an exception, not the normal growth path. Review
-the design when Operations multiply, lose a clear owning domain, call one
-another, become generic Services, or hide most of the main flow.
+Prefer business meaning and traceability over reuse. Review the design when
+internal files lose a clear owner, collect unrelated rules, introduce nested
+or cyclic dependencies, or obscure the primary flow.
 
 If a domain's shared invariants become too complex for these boundaries, that
 domain may deliberately adopt an aggregate-centered or other architecture while
@@ -371,9 +333,9 @@ domain instead of accumulating undocumented precedent.
 
 ## Upstream references
 
-- [HUMQ v1.1.0 repository](https://github.com/kodaimura/humq)
-- [Layer and responsibility rules](https://github.com/kodaimura/humq/blob/main/docs/02-layer-rules.md)
-- [Design principles](https://github.com/kodaimura/humq/blob/main/docs/03-design-principles.md)
-- [Consistency and transactions](https://github.com/kodaimura/humq/blob/main/docs/04-consistency-and-transactions.md)
-- [FastAPI example](https://github.com/kodaimura/humq/blob/main/docs/06-fastapi-example.md)
-- [Adoption limits and evolution](https://github.com/kodaimura/humq/blob/main/docs/07-adoption-limits-and-evolution.md)
+- [HUMQ v1.2.0 repository](https://github.com/kodaimura/humq/tree/v1.2.0)
+- [Layer and responsibility rules](https://github.com/kodaimura/humq/blob/v1.2.0/docs/02-layer-rules.md)
+- [Design principles](https://github.com/kodaimura/humq/blob/v1.2.0/docs/03-design-principles.md)
+- [Consistency and transactions](https://github.com/kodaimura/humq/blob/v1.2.0/docs/04-consistency-and-transactions.md)
+- [FastAPI example](https://github.com/kodaimura/humq/blob/v1.2.0/docs/06-fastapi-example.md)
+- [Adoption limits and evolution](https://github.com/kodaimura/humq/blob/v1.2.0/docs/07-adoption-limits-and-evolution.md)

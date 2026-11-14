@@ -57,7 +57,7 @@ make down_volumes
 API E2E tests are organized by domain so new endpoints can add coverage at the
 same level. See [`test/e2e/README.md`](test/e2e/README.md).
 
-Application code follows HUMQ v1.1.0. Read
+Application code follows HUMQ v1.2.0. Read
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) before adding or changing
 Handlers, Usecases, Modules, Queries, business rules, or transaction behavior.
 

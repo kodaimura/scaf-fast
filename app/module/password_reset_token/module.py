@@ -56,6 +56,6 @@ class PasswordResetTokenModule:
             token.used_at = now
         self.db.flush()
 
-    def update(self, entity: PasswordResetToken) -> PasswordResetToken:
+    def mark_used(self, entity: PasswordResetToken, used_at: datetime) -> None:
+        entity.used_at = used_at
         self.db.flush()
-        return entity
